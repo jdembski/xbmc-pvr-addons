@@ -67,8 +67,8 @@ private:
   PLATFORM::CMutex m_mutex;
   PLATFORM::CCondition<bool> m_started;
   int m_iUpdateTimer;
-  bool GetEPGData();
+  int GetEPGData();
   
-  bool replace(std::string& str, const std::string& from, const std::string& to);
-    
+  void replace(std::string& str, const std::string& from, const std::string& to);
+  bool GetInfoFromProgrammeString(const std::string& strProgramm, time_t& start, time_t& stop, unsigned int& iEventID);
 };

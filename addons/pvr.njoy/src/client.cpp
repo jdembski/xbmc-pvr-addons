@@ -99,7 +99,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (XBMC->GetSetting("n7host", buffer))
   {  
     g_strHostname = buffer;
-    XBMC->Log(LOG_ERROR, "n7host set to - %s", g_strHostname.c_str());
+    XBMC->Log(LOG_DEBUG, "n7host set to - %s", g_strHostname.c_str());
   }
   else
   {
@@ -113,7 +113,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!XBMC->GetSetting("n7port", &g_iPort))
   {
     /* If setting is unknown fallback to defaults */
-    XBMC->Log(LOG_ERROR, "Couldn't get 'n7port' setting, falling back to '%i' as default", DEFAULT_PORT);
+    XBMC->Log(LOG_DEBUG, "Couldn't get 'n7port' setting, falling back to '%i' as default", DEFAULT_PORT);
     g_iPort = DEFAULT_PORT;
   }
   
@@ -185,6 +185,7 @@ void ADDON_FreeSettings()
 PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES *pCapabilities)
 {
   pCapabilities->bSupportsTV                 = true;
+  pCapabilities->bSupportsEPG                = true;
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -223,12 +224,17 @@ unsigned int GetChannelSwitchDelay(void)
 {
   return 2000;
 }
+  
+PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
+{
+  return m_data->requestEPGForChannel(handle, channel, iStart, iEnd);
+}
 
 /** UNUSED API FUNCTIONS */
 PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DialogChannelScan() { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR CallMenuHook(const PVR_MENUHOOK &menuhook) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd) { return PVR_ERROR_NOT_IMPLEMENTED; }
+
 int GetChannelGroupsAmount(void) { return 0; }
 PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group) { return PVR_ERROR_NOT_IMPLEMENTED; }

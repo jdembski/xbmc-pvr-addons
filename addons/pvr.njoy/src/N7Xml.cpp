@@ -3,6 +3,8 @@
 #include "N7Xml.h"
 #include "tinyxml/tinyxml.h"
 #include "tinyxml/XMLUtils.h"
+#include <sstream>
+
 
 using namespace ADDON;
 using namespace PLATFORM;
@@ -38,21 +40,25 @@ N7Xml::~N7Xml(void)
   m_channels.clear();
 }
 
-bool N7Xml::replace(std::string& str, const std::string& from, const std::string& to)
+void N7Xml::replace(std::string& str, const std::string& from, const std::string& to)
 {
-  size_t start_pos = str.find(from);
-  if(start_pos == std::string::npos)
-    return false;
-  str.replace(start_pos, from.length(), to);
-  return true;
+  std::string::size_type pos = 0;
+  
+  while ((pos = str.find(from, pos)) != std::string::npos)
+  {
+    str.replace(pos, from.length(), to);
+    pos += to.length();
+  }
 }
 
-bool N7Xml::GetEPGData()
+int N7Xml::GetEPGData()
 {
+  XBMC->Log(LOG_DEBUG, "%s Fetching EPG Data from N7 backend!", __FUNCTION__);
+  int iCurrentChannelId = -1;
   m_epg.clear();
 
   CStdString strUrl;
-  strUrl.Format("http://%s:%i/n7chepg.xml", g_strHostname.c_str(), g_iPort);
+  strUrl.Format("http://%s:%d/n7chepg.xml", g_strHostname.c_str(), g_iPort);
   CStdString strXML;
   
   CCurlFile http;
@@ -61,6 +67,10 @@ bool N7Xml::GetEPGData()
     XBMC->Log(LOG_DEBUG, "%s - Could not open connection to N7 backend.",__FUNCTION__);
     return false;
   }
+
+  XBMC->Log(LOG_DEBUG, "%s Fetched XML, length:%d", __FUNCTION__, strXML.length());
+  
+  
 
   TiXmlDocument xmlDoc;
   if (!xmlDoc.Parse(strXML.c_str()))
@@ -90,12 +100,9 @@ bool N7Xml::GetEPGData()
     return false;
   }
   
+  iCurrentChannelId = atoi(pElem->Attribute("id"));
   
-  int channelid = atoi(pElem->Attribute("id"));
-  
-  
-  
-  XBMC->Log(LOG_DEBUG, "%s - Parsing EPG for channel:'%d'", __FUNCTION__, channelid);
+  XBMC->Log(LOG_DEBUG, "%s - Parsing EPG for channel:'%d'", __FUNCTION__, iCurrentChannelId);
  
   hRoot=TiXmlHandle(pElem);
   
@@ -112,7 +119,7 @@ bool N7Xml::GetEPGData()
     CStdString strTmp;
     EPGEntry epg;
     
-    epg.iChannelNumber = channelid;
+    epg.iChannelNumber = iCurrentChannelId;
     if (!XMLUtils::GetString(pNode, "title", strTmp))
       continue;
     
@@ -125,19 +132,107 @@ bool N7Xml::GetEPGData()
     
     if (!XMLUtils::GetString(pNode, "programme", strTmp))
       continue;
-    
-    strTmp = "<hello>world</hello>"; //\n<tmp " + strTmp +  ">empty</tmp>";
-    
-    replace(strTmp, "event id= ", "eventid=");
-    replace(strTmp, "channel id", "channelid");
-    
-    
-    XBMC->Log(LOG_DEBUG, "%s: Programme string: %s", __FUNCTION__, strTmp.c_str());
-    
-    
-    XBMC->Log(LOG_DEBUG, "%s - EPG Title:'%s', ChannelNumber:'%d'", __FUNCTION__, epg.strTitle.c_str(), epg.iChannelNumber);
+       
+    replace(strTmp, " +0000\"", "");
+    replace(strTmp, "event id= ", ";");
+    replace(strTmp, "channel id=", ";");
+    replace(strTmp, "stop=\"", ";");
+    replace(strTmp, "start=\"", "");
+    replace(strTmp, "\"", "");
+    replace(strTmp, " ", "");
 
+    XBMC->Log(LOG_DEBUG, "%s: Programme string: %s", __FUNCTION__, strTmp.c_str());  
+    
+    time_t start;
+    time_t stop;
+    unsigned int iEventId;
+    
+    
+    GetInfoFromProgrammeString(strTmp, start, stop, iEventId);
+    
+    epg.startTime = start;
+    epg.endTime = stop;
+    epg.iEventId = iEventId;
+    
+    m_epg.push_back(epg);
+    
+    XBMC->Log(LOG_DEBUG, "%s - EPG Title:'%s', ChannelNumber:'%d', Start:%d, End:%d, ID:%d", __FUNCTION__, epg.strTitle.c_str(), epg.iChannelNumber, start, stop, iEventId);
   }
+  
+  return iCurrentChannelId;
+}
+
+bool N7Xml::GetInfoFromProgrammeString(const std::string& strProgramm, time_t& start, time_t& stop, unsigned int& iEventID)
+{
+  int year = 0;
+  int month = 0;
+  int day = 0;
+  int hour = 0;
+  int minute = 0;
+  int seconds = 0;
+ 
+  // First get the start date-string
+  int pos = strProgramm.find(";",0);
+  std::string strTmp = strProgramm.substr(0, pos);
+  
+  year = atoi(strTmp.substr(0,4).c_str());
+  month = atoi(strTmp.substr(4,2).c_str());
+  day = atoi(strTmp.substr(6,2).c_str());
+  hour = atoi(strTmp.substr(8,2).c_str());
+  minute = atoi(strTmp.substr(10,2).c_str());
+  seconds = atoi(strTmp.substr(12,2).c_str());
+  
+  struct tm tmpTime;
+  
+  tmpTime.tm_year = year - 1900;
+  tmpTime.tm_mon = month - 1;
+  tmpTime.tm_mday = day;
+  tmpTime.tm_hour = hour+1;
+  tmpTime.tm_min = minute;
+  tmpTime.tm_sec = seconds;
+  
+  start = mktime(&tmpTime);
+  
+  XBMC->Log(LOG_DEBUG, "Start: %s Y:%d, M:%d, D:%d, H:%d, M:%d, S:%d (%s) time_t(%d)", __FUNCTION__, year, month, day, hour, minute, seconds, strTmp.c_str(), start);
+  
+  // Now get the stop date-string
+  int next_pos = strProgramm.find(";", pos);
+  strTmp = strProgramm.substr(pos+1, next_pos);
+  
+  year = atoi(strTmp.substr(0,4).c_str());
+  month = atoi(strTmp.substr(4,2).c_str());
+  day = atoi(strTmp.substr(6,2).c_str());
+  hour = atoi(strTmp.substr(8,2).c_str());
+  minute = atoi(strTmp.substr(10,2).c_str());
+  seconds = atoi(strTmp.substr(12,2).c_str());
+  
+  tmpTime.tm_year = year - 1900;
+  tmpTime.tm_mon = month - 1;
+  tmpTime.tm_mday = day;
+  tmpTime.tm_hour = hour+1;
+  tmpTime.tm_min = minute;
+  tmpTime.tm_sec = seconds;
+  
+  stop = mktime(&tmpTime);
+
+  XBMC->Log(LOG_DEBUG, "Stop: %s Y:%d, M:%d, D:%d, H:%d, M:%d, S:%d (%s) time_t(%d)", __FUNCTION__, year, month, day, hour, minute, seconds, strTmp.c_str(), stop);
+  
+  // Get the channel id
+  
+  pos += next_pos;
+  next_pos = strProgramm.find(";", pos);
+  strTmp = strProgramm.substr(pos, next_pos-pos);
+
+  //int iChannelId = atoi(strTmp.c_str());
+  
+  // Get the event id
+  
+  pos += (next_pos-pos)+2;
+  strTmp = strProgramm.substr(pos+1, strProgramm.length()-pos);
+
+  std::stringstream ss;
+  ss << std::hex << strTmp;
+  ss >> iEventID;
   
   return true;
 }
@@ -151,16 +246,16 @@ void *N7Xml::Process()
     Sleep(1 * 1000);
     m_iUpdateTimer += 1;
     
-    if ((int)m_iUpdateTimer > 2)
+    if ((int)m_iUpdateTimer > 10)
     {
       m_iUpdateTimer = 0;
       
-      if (GetEPGData())
+      int iCurrentChannelId = GetEPGData();
+      if (iCurrentChannelId != -1)
       {
-        XBMC->Log(LOG_DEBUG, "%s - Fetching EPGData!", __FUNCTION__);
+        XBMC->Log(LOG_DEBUG, "%s - Trigger EPGUpdate fpr channel '%d'", __FUNCTION__, iCurrentChannelId);
+        PVR->TriggerEpgUpdate(iCurrentChannelId);
       }
-       // PVR->TriggerEPGUpdate(); // TODO DEFINE CORRECTLY
-      
     }
     
   }
@@ -186,7 +281,7 @@ void N7Xml::list_channels()
   CCurlFile http;
   if(!http.Get(strUrl, strXML))
   {
-    XBMC->Log(LOG_DEBUG, "N7Xml - Could not open connection to N7 backend.");
+    XBMC->Log(LOG_DEBUG, "%s - Could not open connection to N7 backend.", __FUNCTION__);
   }
   else
   {
@@ -198,7 +293,7 @@ void N7Xml::list_channels()
     TiXmlElement* channelsNode = rootXmlNode->FirstChildElement("channel");
     if (channelsNode)
     {
-      XBMC->Log(LOG_DEBUG, "N7Xml - Connected to N7 backend.");
+      XBMC->Log(LOG_DEBUG, "%s - Connected to N7 backend.", __FUNCTION__);
       m_connected = true;
       int iUniqueChannelId = 0;
       TiXmlNode *pChannelNode = NULL;
@@ -211,8 +306,9 @@ void N7Xml::list_channels()
         channel.iUniqueId = ++iUniqueChannelId;
 
         /* channel number */
-        if (!XMLUtils::GetInt(pChannelNode, "number", channel.iChannelNumber))
-          channel.iChannelNumber = channel.iUniqueId;
+        //if (!XMLUtils::GetInt(pChannelNode, "number", channel.iChannelNumber))
+        // Always use the XBMC generated channel id for now
+        channel.iChannelNumber = channel.iUniqueId;
 
         /* channel name */
         if (!XMLUtils::GetString(pChannelNode, "title", strTmp))
@@ -238,6 +334,7 @@ void N7Xml::list_channels()
 
 PVR_ERROR N7Xml::requestChannelList(ADDON_HANDLE handle, bool bRadio)
 {
+
   if (m_connected)
   {
     std::vector<PVRChannel>::const_iterator item;
@@ -267,7 +364,38 @@ PVR_ERROR N7Xml::requestChannelList(ADDON_HANDLE handle, bool bRadio)
 
 PVR_ERROR N7Xml::requestEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  
+  for (unsigned int iPtr = 0; iPtr < m_epg.size(); iPtr++)
+  {
+    EPGEntry entry = m_epg.at(iPtr);
+    
+    EPG_TAG broadcast;
+    memset(&broadcast, 0, sizeof(EPG_TAG));
+    
+    broadcast.iUniqueBroadcastId  = entry.iEventId;
+    broadcast.strTitle            = entry.strTitle.c_str();
+    broadcast.iChannelNumber      = channel.iChannelNumber;
+    broadcast.startTime           = entry.startTime;
+    broadcast.endTime             = entry.endTime;
+    broadcast.strPlotOutline      = ""; //unused
+    broadcast.strPlot             = entry.strPlot.c_str();
+    broadcast.strIconPath         = ""; // unused
+    broadcast.iGenreType          = 0; // unused
+    broadcast.iGenreSubType       = 0; // unused
+    broadcast.strGenreDescription = "";
+    broadcast.firstAired          = 0;  // unused
+    broadcast.iParentalRating     = 0;  // unused
+    broadcast.iStarRating         = 0;  // unused
+    broadcast.bNotify             = false;
+    broadcast.iSeriesNumber       = 0;  // unused
+    broadcast.iEpisodeNumber      = 0;  // unused
+    broadcast.iEpisodePartNumber  = 0;  // unused
+
+    
+    PVR->TransferEpgEntry(handle, &broadcast);
+  }
+  
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR N7Xml::getSignal(PVR_SIGNAL_STATUS &qualityinfo)
