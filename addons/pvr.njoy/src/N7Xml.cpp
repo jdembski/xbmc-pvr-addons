@@ -253,7 +253,7 @@ void *N7Xml::Process()
       int iCurrentChannelId = GetEPGData();
       if (iCurrentChannelId != -1)
       {
-        XBMC->Log(LOG_DEBUG, "%s - Trigger EPGUpdate fpr channel '%d'", __FUNCTION__, iCurrentChannelId);
+        XBMC->Log(LOG_DEBUG, "%s - Trigger EPGUpdate for channel '%d'", __FUNCTION__, iCurrentChannelId);
         PVR->TriggerEpgUpdate(iCurrentChannelId);
       }
     }
