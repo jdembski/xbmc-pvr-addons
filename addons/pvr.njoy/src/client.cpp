@@ -212,11 +212,17 @@ const char * GetConnectionString()
 
 int GetChannelsAmount(void)
 {
+  if (!m_data)
+    return PVR_ERROR_SERVER_ERROR;
+
   return m_data->getChannelsAmount();
 }
 
 PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
+  if (!m_data)
+    return PVR_ERROR_SERVER_ERROR;
+
   return m_data->requestChannelList(handle, bRadio);
 }
 
@@ -227,6 +233,9 @@ unsigned int GetChannelSwitchDelay(void)
   
 PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
 {
+  if (!m_data)
+    return PVR_ERROR_SERVER_ERROR;
+
   return m_data->requestEPGForChannel(handle, channel, iStart, iEnd);
 }
 

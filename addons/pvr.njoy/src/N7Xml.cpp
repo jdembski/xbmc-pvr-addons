@@ -23,8 +23,7 @@ bool CCurlFile::Get(const std::string &strURL, std::string &strResult)
   return false;
 }
 
-N7Xml::N7Xml(void) :
-        m_connected(false)
+N7Xml::N7Xml(void) : m_connected(false)
 {
   m_iUpdateTimer = 0;
   list_channels();
@@ -34,9 +33,10 @@ N7Xml::N7Xml(void) :
 
 N7Xml::~N7Xml(void)
 {
-  if (IsRunning())
+  //if (IsRunning())
     StopThread();
-  
+ 
+  m_epg.clear(); 
   m_channels.clear();
 }
 
@@ -246,6 +246,7 @@ void *N7Xml::Process()
     
     if ((int)m_iUpdateTimer > 10)
     {
+      CLockObject lock(m_mutex);
       m_iUpdateTimer = 0;
       
       int iCurrentChannelId = GetEPGData();
@@ -286,6 +287,7 @@ int N7Xml::GetUniqueChannelId(int iBackendChannelId)
 
 void N7Xml::list_channels()
 {
+  CLockObject lock(m_mutex);
   CStdString strUrl;
   strUrl.Format("http://%s:%i/n7channel_nt.xml", g_strHostname.c_str(), g_iPort);
   CStdString strXML;
