@@ -70,8 +70,6 @@ int N7Xml::GetEPGData()
 
   XBMC->Log(LOG_DEBUG, "%s Fetched XML, length:%d", __FUNCTION__, strXML.length());
   
-  
-
   TiXmlDocument xmlDoc;
   if (!xmlDoc.Parse(strXML.c_str()))
   {
@@ -100,7 +98,7 @@ int N7Xml::GetEPGData()
     return false;
   }
   
-  iCurrentChannelId = atoi(pElem->Attribute("id"));
+  iCurrentChannelId = GetUniqueChannelId(atoi(pElem->Attribute("id")));
   
   XBMC->Log(LOG_DEBUG, "%s - Parsing EPG for channel:'%d'", __FUNCTION__, iCurrentChannelId);
  
@@ -272,6 +270,20 @@ int N7Xml::getChannelsAmount()
   return m_channels.size();
 }
 
+int N7Xml::GetUniqueChannelId(int iBackendChannelId)
+{
+  XBMC->Log(LOG_DEBUG, "%s Fetching UniqueChannelId for BackendChannelId '%d'", __FUNCTION__, iBackendChannelId);
+  for (unsigned int i = 0;i<m_channels.size();  i++) 
+  {
+    if (iBackendChannelId == m_channels[i].iBackendChannelId)
+    {
+      XBMC->Log(LOG_DEBUG, "%s Found UniqueChannelId '%d' for BackendChannelId", __FUNCTION__, m_channels[i].iUniqueId);
+      return m_channels[i].iUniqueId;
+    }
+  }
+  return -1;
+}
+
 void N7Xml::list_channels()
 {
   CStdString strUrl;
@@ -306,8 +318,9 @@ void N7Xml::list_channels()
         channel.iUniqueId = ++iUniqueChannelId;
 
         /* channel number */
-        //if (!XMLUtils::GetInt(pChannelNode, "number", channel.iChannelNumber))
-        // Always use the XBMC generated channel id for now
+        if (!XMLUtils::GetInt(pChannelNode, "number", channel.iBackendChannelId))
+          continue;
+
         channel.iChannelNumber = channel.iUniqueId;
 
         /* channel name */
@@ -324,6 +337,8 @@ void N7Xml::list_channels()
           channel.strStreamURL = "";
         else
           channel.strStreamURL = strTmp;
+
+        XBMC->Log(LOG_DEBUG, "%s Adding channel: UniqueId '%d', BackendChannelId '%d', Name '%s'", __FUNCTION__, channel.iUniqueId, channel.iBackendChannelId, channel.strChannelName.c_str());
 
         m_channels.push_back(channel);
       }

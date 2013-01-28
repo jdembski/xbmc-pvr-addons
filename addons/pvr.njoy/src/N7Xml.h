@@ -8,6 +8,7 @@ struct PVRChannel
 {
   int         iUniqueId;
   int         iChannelNumber;
+  int         iBackendChannelId;
 
   std::string strChannelName;
   std::string strIconPath;
@@ -19,6 +20,7 @@ struct PVRChannel
   {
     iUniqueId      = 0;
     iChannelNumber = 0;
+    iBackendChannelId = 0;
     strChannelName = "";
     strIconPath    = "";
     strStreamURL   = "";
@@ -71,4 +73,5 @@ private:
   
   void replace(std::string& str, const std::string& from, const std::string& to);
   bool GetInfoFromProgrammeString(const std::string& strProgramm, time_t& start, time_t& stop, unsigned int& iEventID);
+  int GetUniqueChannelId(int iBackendChannelId);
 };
