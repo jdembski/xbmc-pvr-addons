@@ -1,3 +1,9 @@
+v1.6.164 (18-01-2013)
+- EPG genre will contain the ARGUS TV "Category" string.
+v1.6.163 (01-01-2013)
+- Updated language files from Transifex
+v1.6.162 (15-12-2012)
+- Updated language files from Transifex
 v1.6.161 (12-12-2012)
 - New version number by Team XBMC
 v1.6.160.145 (11-12-2012)

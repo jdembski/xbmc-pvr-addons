@@ -213,7 +213,7 @@ bool cPVRClientArgusTV::ShareErrorsFound(void)
         accessMsg = (char*) lpMsgBuf;
         LocalFree(lpMsgBuf);
       }
-#elif defined(TARGET_LINUX) || defined(TARGET_DARWIN)
+#elif defined(TARGET_LINUX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD)
       std::string CIFSname = sharename;
       std::string SMBPrefix = "smb://";
       if (g_szUser.length() > 0)
@@ -380,9 +380,9 @@ PVR_ERROR cPVRClientArgusTV::GetEpg(ADDON_HANDLE handle, const PVR_CHANNEL &chan
             broadcast.strPlotOutline      = epg.Subtitle();
             broadcast.strPlot             = epg.Description();
             broadcast.strIconPath         = "";
-            broadcast.iGenreType          = 0;
+            broadcast.iGenreType          = EPG_GENRE_USE_STRING;
             broadcast.iGenreSubType       = 0;
-            broadcast.strGenreDescription = "";
+            broadcast.strGenreDescription = epg.Genre();
             broadcast.firstAired          = 0;
             broadcast.iParentalRating     = 0;
             broadcast.iStarRating         = 0;

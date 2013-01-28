@@ -21,8 +21,9 @@
  *
  */
 
+#include "client.h"
 #include "HTSPTypes.h"
-#include "platform/threads/mutex.h"
+#include "platform/threads/threads.h"
 
 extern "C" {
 #include "libhts/net.h"
@@ -34,29 +35,91 @@ namespace PLATFORM
   class CTcpConnection;
 }
 
-class CHTSPConnection
+class CHTSPConnectionCallback
 {
 public:
-  CHTSPConnection();
+  CHTSPConnectionCallback(void) {}
+  virtual ~CHTSPConnectionCallback(void) {}
+
+  virtual bool OnConnectionDropped(void) { return true; }
+  virtual bool OnConnectionRestored(void) { return true; }
+  virtual bool ProcessMessage(htsmsg* msg) = 0;
+};
+
+struct SMessage
+{
+  PLATFORM::CEvent* event;
+  htsmsg_t*         msg;
+};
+typedef std::map<uint32_t, SMessage> SMessages;
+
+class CHTSResult
+{
+public:
+  CHTSResult(void);
+  ~CHTSResult(void);
+
+  std::string GetErrorMessage(void);
+  bool        IsError(void);
+  bool        NoAccess(void);
+
+  htsmsg*   message;      /*!< the response message */
+  PVR_ERROR status;       /*!< the return code */
+
+private:
+  std::string m_strError; /*!< the error response */
+};
+
+class CHTSPConnection;
+
+class CHTSPReconnect : public PLATFORM::CThread
+{
+public:
+  CHTSPReconnect(CHTSPConnection* connection) :
+    m_connection(connection) {}
+  virtual ~CHTSPReconnect(void) {}
+
+  void* Process(void);
+
+private:
+  CHTSPConnection* m_connection;
+};
+
+class CHTSPConnection : private PLATFORM::CThread
+{
+  friend class CHTSPReconnect;
+
+public:
+  CHTSPConnection(CHTSPConnectionCallback* callback);
   ~CHTSPConnection();
 
   bool        Connect(void);
   void        Close();
   bool        IsConnected(void);
+  bool        CheckConnection(uint32_t iTimeout);
   int         GetProtocol() const { return m_iProtocol; }
   const char *GetServerName() const { return m_strServerName.c_str(); }
   const char *GetVersion() const { return m_strVersion.c_str(); }
+  const char *GetWebroot() const { return m_strWebroot.c_str(); }
+  const       CStdString GetWebURL(const char *fmt, ...) const;
 
-  htsmsg_t *  ReadMessage(int iInitialTimeout = 10000, int iDatapacketTimeout = 10000);
   bool        TransmitMessage(htsmsg_t* m);
-  htsmsg_t *  ReadResult (htsmsg_t* m, bool sequence = true);
-  bool        ReadSuccess(htsmsg_t* m, bool sequence = true, std::string action = "");
+  void        ReadResult(htsmsg_t *m, CHTSResult &result, const char* strAction = NULL);
+  bool        ReadSuccess(htsmsg_t* m, const char* strAction = NULL);
 
   bool        CanTimeshift(void);
+  bool        CanSeekLiveStream(void);
+
+  bool        CanTranscode(void) const  { return m_bTranscodingSupport; }
+  void        SetReadTimeout(int iTimeout);
+  void        TriggerReconnect(void);
 
 private:
-  bool SendGreeting(void);
-  bool Auth(void);
+  bool       OpenSocket(void);
+  void*      Process(void);
+  bool       SendGreeting(void);
+  bool       Auth(void);
+  htsmsg_t*  ReadMessage(int iInitialTimeout = 1000, int iDatapacketTimeout = 1000);
 
   PLATFORM::CMutex          m_mutex;
   PLATFORM::CTcpConnection* m_socket;
@@ -70,9 +133,18 @@ private:
   std::string               m_strPassword;
   std::string               m_strVersion;
   std::string               m_strHostname;
+  std::string               m_strWebroot;
   bool                      m_bIsConnected;
   bool                      m_bTimeshiftSupport;
+  bool                      m_bTimeshiftSeekSupport;
+  bool                      m_bTranscodingSupport;
 
   std::deque<htsmsg_t*>     m_queue;
   const unsigned int        m_iQueueSize;
+  CHTSPConnectionCallback*  m_callback;
+  PLATFORM::CCondition<bool> m_connectEvent;
+  SMessages                  m_messageQueue;
+  PLATFORM::CTimeout        m_readTimeout;
+  int                       m_iReadTimeout;
+  CHTSPReconnect*           m_reconnect;
 };
