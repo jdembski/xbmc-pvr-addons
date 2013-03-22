@@ -119,7 +119,7 @@ msgstr "Aktiviere Timeshift"
 
 msgctxt "#30101"
 msgid "Timeshift buffer path"
-msgstr "Pfad zum Timeshift-Buffer"
+msgstr "Kompletter Pfad zur Timeshift-Buffer-Datei"
 
 #empty strings from id 30028 to 30499
 #notifications
