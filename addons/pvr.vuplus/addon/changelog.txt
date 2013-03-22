@@ -2,6 +2,7 @@
 - fix: typos in language files 
 - fix: typo in settings.xml
 - fix: (temporarily) disable the deviceinfo API call to openwebif as it is currently broken in openwebif
+- add: timeshift support (based on Manuel Mausz DVBViewer Timeshift support)
 
 1.7.7
 - Bump after PVR API version bump

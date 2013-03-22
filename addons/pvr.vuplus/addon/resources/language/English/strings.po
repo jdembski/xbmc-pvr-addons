@@ -121,6 +121,14 @@ msgctxt "#30027"
 msgid "Fetch picons from webinterface"
 msgstr ""
 
+msgctxt "#30100"
+msgid "Enable Timeshift"
+msgstr ""
+
+msgctxt "#30101"
+msgid "Timeshift buffer path"
+msgstr ""
+
 #empty strings from id 30028 to 30499
 #notifications
 

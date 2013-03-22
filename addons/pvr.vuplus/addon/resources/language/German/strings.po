@@ -113,6 +113,14 @@ msgctxt "#30027"
 msgid "Fetch picons from webinterface"
 msgstr "Lade Picons vom Web-Interface"
 
+msgctxt "#30100"
+msgid "Enable Timeshift"
+msgstr "Aktiviere Timeshift"
+
+msgctxt "#30101"
+msgid "Timeshift buffer path"
+msgstr "Pfad zum Timeshift-Buffer"
+
 #empty strings from id 30028 to 30499
 #notifications
 

@@ -20,6 +20,16 @@
  *
  */
 
+#ifndef UNUSED
+#if defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
+#endif
+
 #include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
 #include "libXBMC_gui.h"
@@ -29,6 +39,7 @@
 #define DEFAULT_STREAM_PORT      8001 
 #define DEFAULT_WEB_PORT         80
 #define DEFAULT_UPDATE_INTERVAL  2
+#define DEFAULT_TSBUFFERPATH     "special://userdata/addon_data/pvr.vuplus/tsbuffer"
 
 extern bool                      m_bCreated;
 extern std::string               g_strHostname;
@@ -54,5 +65,7 @@ extern std::string               g_strOneGroup;
 extern std::string               g_szUserPath;
 extern std::string               g_szClientPath;
 extern std::string               g_strChannelDataPath;
+extern bool                      g_bUseTimeshift;
+extern std::string               g_strTimeshiftBufferPath;
 extern ADDON::CHelper_libXBMC_addon *   XBMC;
 extern CHelper_libXBMC_pvr *     PVR;

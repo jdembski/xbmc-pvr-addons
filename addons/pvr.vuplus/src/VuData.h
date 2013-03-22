@@ -2,6 +2,7 @@
 
 #include "platform/util/StdString.h"
 #include "client.h"
+#include "TimeshiftBuffer.h"
 #include "platform/threads/threads.h"
 #include "tinyxml/tinyxml.h"
     
@@ -174,6 +175,7 @@ private:
   std::vector<std::string> m_locations;
   bool m_bInitial;
   unsigned int m_iClientIndexCounter;
+  TimeshiftBuffer *m_tsBuffer;
 
   PLATFORM::CMutex m_mutex;
   PLATFORM::CCondition<bool> m_started;
@@ -244,5 +246,9 @@ public:
   bool SwitchChannel(const PVR_CHANNEL &channel);
   bool Open();
   void Action();
+  int ReadLiveStream(unsigned char *pBuffer, unsigned int iBufferSize);
+  long long SeekLiveStream(long long iPosition, int iWhence /* = SEEK_SET */);
+  long long PositionLiveStream(void);
+  long long LengthLiveStream(void);
 };
 

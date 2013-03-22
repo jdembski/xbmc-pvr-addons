@@ -6,6 +6,8 @@
     <setting id="onlinepicons" type="bool" default="true" label="30027" />
     <setting id="iconpath" type="folder" label="30008" enable="eq(-1,false)" default="" />
     <setting id="updateint" type="number" label="30010" default="2" />
+    <setting id="usetimeshift"  type="bool" label="30100" default="false" />
+    <setting id="timeshiftpath" type="text" label="30101" enabled="eq(-1,0)" default="special://userdata/addon_data/pvr.vuplus/tsbuffer" />
   </category>
 
   <!-- Channels -->

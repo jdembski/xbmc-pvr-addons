@@ -601,14 +601,16 @@ Vu::Vu()
     strURL.Format("%s:%s@", g_strUsername.c_str(), g_strPassword.c_str());
   strURL.Format("http://%s%s:%u/", strURL.c_str(), g_strHostname.c_str(), g_iPortWeb);
   m_strURL = strURL.c_str();
+
   m_iNumRecordings = 0;
   m_iNumChannelGroups = 0;
   m_iCurrentChannel = -1;
   m_iClientIndexCounter = 1;
+
   m_bInitial = false;
   m_bUpdating = false;
-
   m_iUpdateTimer = 0;
+  m_tsBuffer = NULL;
 }
 
 bool Vu::Open()
@@ -994,14 +996,16 @@ PVR_ERROR Vu::GetChannels(ADDON_HANDLE handle, bool bRadio)
       xbmcChannel.iChannelNumber    = channel.iChannelNumber;
       strncpy(xbmcChannel.strChannelName, channel.strChannelName.c_str(), sizeof(xbmcChannel.strChannelName));
       strncpy(xbmcChannel.strInputFormat, "", 0); // unused
-
-      CStdString strStream;
-      strStream.Format("pvr://stream/tv/%i.ts", channel.iUniqueId);
-      strncpy(xbmcChannel.strStreamURL, strStream.c_str(), sizeof(xbmcChannel.strStreamURL)); 
-      strncpy(xbmcChannel.strIconPath, channel.strIconPath.c_str(), sizeof(xbmcChannel.strIconPath));
       xbmcChannel.iEncryptionSystem = 0;
-      
       xbmcChannel.bIsHidden         = false;
+      strncpy(xbmcChannel.strIconPath, channel.strIconPath.c_str(), sizeof(xbmcChannel.strIconPath));
+
+      if (!g_bUseTimeshift)
+      {
+        CStdString strStream;
+        strStream.Format("pvr://stream/tv/%i.ts", channel.iUniqueId);
+        strncpy(xbmcChannel.strStreamURL, strStream.c_str(), sizeof(xbmcChannel.strStreamURL)); 
+      }
 
       PVR->TransferChannelEntry(handle, &xbmcChannel);
     }
@@ -1021,6 +1025,8 @@ Vu::~Vu()
   m_recordings.clear();
   m_groups.clear();
   m_bIsConnected = false;
+  if (m_tsBuffer)
+    SAFE_DELETE(m_tsBuffer);
 }
 
 PVR_ERROR Vu::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
@@ -1851,12 +1857,49 @@ bool Vu::OpenLiveStream(const PVR_CHANNEL &channelinfo)
   if ((int)channelinfo.iUniqueId == m_iCurrentChannel)
     return true;
 
-  return SwitchChannel(channelinfo);
+  if (!g_bUseTimeshift)
+    return SwitchChannel(channelinfo);
+
+  if (m_tsBuffer)
+    SAFE_DELETE(m_tsBuffer);
+  XBMC->Log(LOG_INFO, "%s ts buffer starts url=%s", __FUNCTION__, GetLiveStreamURL(channelinfo));
+  m_tsBuffer = new TimeshiftBuffer(GetLiveStreamURL(channelinfo), g_strTimeshiftBufferPath);
+  return m_tsBuffer->IsValid();
 }
 
 void Vu::CloseLiveStream(void) 
 {
   m_iCurrentChannel = -1;
+  if (m_tsBuffer)
+    SAFE_DELETE(m_tsBuffer);
+}
+
+int Vu::ReadLiveStream(unsigned char *pBuffer, unsigned int iBufferSize)
+{
+  if (!m_tsBuffer)
+    return 0;
+  return m_tsBuffer->ReadData(pBuffer, iBufferSize);
+}
+
+long long Vu::SeekLiveStream(long long iPosition, int iWhence /* = SEEK_SET */)
+{
+  if (!m_tsBuffer)
+    return 0;
+  return m_tsBuffer->Seek(iPosition, iWhence);
+}
+
+long long Vu::PositionLiveStream(void)
+{
+  if (!m_tsBuffer)
+    return 0;
+  return m_tsBuffer->Position();
+}
+
+long long Vu::LengthLiveStream(void)
+{
+  if (!m_tsBuffer)
+    return 0;
+  return m_tsBuffer->Length();
 }
 
 bool Vu::SwitchChannel(const PVR_CHANNEL &channel)
