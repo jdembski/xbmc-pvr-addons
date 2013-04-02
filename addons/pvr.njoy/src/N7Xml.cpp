@@ -411,6 +411,8 @@ PVR_ERROR N7Xml::requestEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
     
     PVR->TransferEpgEntry(handle, &broadcast);
   }
+
+  m_epg.clear();
   
   return PVR_ERROR_NO_ERROR;
 }
