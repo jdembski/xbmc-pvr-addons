@@ -97,8 +97,11 @@ int N7Xml::GetEPGData()
     XBMC->Log(LOG_DEBUG, "Could not find <channel> element");
     return false;
   }
+
+  if (!XMLUtils::GetInt(pElem, "ch-number", iCurrentChannelId)) 
+    return false;
   
-  iCurrentChannelId = GetUniqueChannelId(atoi(pElem->Attribute("id")));
+  iCurrentChannelId = GetUniqueChannelId(iCurrentChannelId);
   
   XBMC->Log(LOG_DEBUG, "%s - Parsing EPG for channel:'%d'", __FUNCTION__, iCurrentChannelId);
  
