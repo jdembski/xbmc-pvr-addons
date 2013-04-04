@@ -89,15 +89,6 @@ int N7Xml::GetEPGData()
     return false;
   }
   
-  hRoot = TiXmlHandle(pElem);
-  pElem = hRoot.FirstChildElement("channel").Element();
-  
-  if (!pElem)
-  {
-    XBMC->Log(LOG_DEBUG, "Could not find <channel> element");
-    return false;
-  }
-
   if (!XMLUtils::GetInt(pElem, "ch-number", iCurrentChannelId)) 
     return false;
   
