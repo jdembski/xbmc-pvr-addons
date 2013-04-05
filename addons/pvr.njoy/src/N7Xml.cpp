@@ -89,8 +89,22 @@ int N7Xml::GetEPGData()
     return false;
   }
   
-  if (!XMLUtils::GetInt(pElem, "ch-number", iCurrentChannelId)) 
+  hRoot=TiXmlHandle(pElem);
+  pElem = hRoot.FirstChildElement("channel").Element();
+  
+  if (!pElem)
+  {
+    XBMC->Log(LOG_DEBUG, "Could not find <channel> element");
     return false;
+  }
+ 
+XBMC->Log(LOG_DEBUG, "%s - jdembski", __FUNCTION__);
+ 
+  if (!XMLUtils::GetInt(pElem, "ch-number", iCurrentChannelId)) 
+  {
+    XBMC->Log(LOG_DEBUG, "%s - Could not get channel number from XML!", __FUNCTION__);
+    return false;
+  }
   
   iCurrentChannelId = GetUniqueChannelId(iCurrentChannelId);
   
@@ -238,7 +252,7 @@ void *N7Xml::Process()
     Sleep(1 * 1000);
     m_iUpdateTimer += 1;
     
-    if ((int)m_iUpdateTimer > 10)
+    if ((int)m_iUpdateTimer > 30)
     {
       CLockObject lock(m_mutex);
       m_iUpdateTimer = 0;
