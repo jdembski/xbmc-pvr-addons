@@ -392,7 +392,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsChannelScan        = false;
   pCapabilities->bHandlesInputStream         = true;
   pCapabilities->bHandlesDemuxing            = false;
-  pCapabilities->bSupportsLastPlayedPosition = true;
+  pCapabilities->bSupportsLastPlayedPosition = false;
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -585,14 +585,6 @@ const char * GetLiveStreamURL(const PVR_CHANNEL &channel)
   return VuData->GetLiveStreamURL(channel);
 }
 
-PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) 
-{ 
-  if (!VuData || !VuData->IsConnected())
-    return PVR_ERROR_SERVER_ERROR;
-
-  return VuData->SetRecordingLastPlayedPosition(recording, lastplayedposition);
-}
-
 bool CanPauseStream(void)
 {
   if (!VuData || !VuData->IsConnected())
@@ -636,26 +628,18 @@ long long LengthLiveStream(void)
   return VuData->LengthLiveStream();
 }
 
-int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) 
-{ 
-  if (!VuData || !VuData->IsConnected())
-    return -1;
-
-  return VuData->GetRecordingLastPlayedPosition(recording);
-}
-
 /** UNUSED API FUNCTIONS */
 PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus) { return PVR_ERROR_NO_ERROR; }
 PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES* UNUSED(pProperties)) { return PVR_ERROR_NOT_IMPLEMENTED; } 
 void DemuxAbort(void) { return; }
 DemuxPacket* DemuxRead(void) { return NULL; }
 PVR_ERROR DialogChannelScan(void) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR CallMenuHook(const PVR_MENUHOOK &UNUSED(menuhook)) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR DeleteChannel(const PVR_CHANNEL &UNUSED(channel)) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR RenameChannel(const PVR_CHANNEL &UNUSED(channel)) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR MoveChannel(const PVR_CHANNEL &UNUSED(channel)) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR DialogChannelSettings(const PVR_CHANNEL &UNUSED(channel)) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR DialogAddChannel(const PVR_CHANNEL &UNUSED(channel)) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR CallMenuHook(const PVR_MENUHOOK &menuhook, const PVR_MENUHOOK_DATA &item) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR DeleteChannel(const PVR_CHANNEL &channel) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR RenameChannel(const PVR_CHANNEL &channel) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR MoveChannel(const PVR_CHANNEL &channel) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR DialogChannelSettings(const PVR_CHANNEL &channel) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR DialogAddChannel(const PVR_CHANNEL &channel) { return PVR_ERROR_NOT_IMPLEMENTED; }
 bool OpenRecordedStream(const PVR_RECORDING &UNUSED(recording)) { return false; }
 void CloseRecordedStream(void) {}
 long long PositionRecordedStream(void) { return -1; }
@@ -664,6 +648,8 @@ int ReadRecordedStream(unsigned char *UNUSED(pBuffer), unsigned int UNUSED(iBuff
 long long SeekRecordedStream(long long UNUSED(iPosition), int UNUSED(iWhence) /* = SEEK_SET */) { return 0; }
 void DemuxReset(void) {}
 void DemuxFlush(void) {}
+int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) { return 0; }
+PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) { return PVR_ERROR_NOT_IMPLEMENTED; } 
 PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return PVR_ERROR_NOT_IMPLEMENTED; };
 unsigned int GetChannelSwitchDelay(void) { return 0; }

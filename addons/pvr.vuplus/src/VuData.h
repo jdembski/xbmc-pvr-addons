@@ -183,10 +183,6 @@ private:
   bool m_bUpdating;
 
   // functions
-  void StoreChannelData();
-  void LoadChannelData();
-  bool StoreLastPlayedPositions();
-  bool RestoreLastPlayedPositions();
   CStdString GetHttpXML(CStdString& url);
   int GetChannelNumber(CStdString strServiceReference);
   CStdString GetChannelIconPath(CStdString strChannelName);
@@ -227,9 +223,6 @@ public:
   int GetTimersAmount(void);
   PVR_ERROR GetTimers(ADDON_HANDLE handle);
   PVR_ERROR AddTimer(const PVR_TIMER &timer);
-  PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition);
-  bool SetRecordingLastPlayedPosition(CStdString strStreamURL, int lastplayedposition);
-  int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
   PVR_ERROR UpdateTimer(const PVR_TIMER &timer);
   PVR_ERROR DeleteTimer(const PVR_TIMER &timer);
   bool GetRecordingFromLocation(CStdString strRecordingFolder);
