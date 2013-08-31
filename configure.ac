@@ -22,13 +22,6 @@ AC_ARG_ENABLE([release],
   [use_release=$enableval],
   [use_release=no])
 
-### External libraries options
-AC_ARG_ENABLE([external-ffmpeg],
-  [AS_HELP_STRING([--enable-external-ffmpeg],
-  [enable use of external ffmpeg libraries (default is no) 'Linux only'])],
-  [use_external_ffmpeg=$enableval],
-  [use_external_ffmpeg=no])
-
 ### External dependencies option
 AC_ARG_ENABLE([addons-with-dependencies],
   [AS_HELP_STRING([--enable-addons-with-dependencies],
@@ -48,10 +41,6 @@ if test "$use_release" = "yes"; then
 fi
 
 AC_CHECK_PROG(HAVE_PKG_CONFIG, pkg-config, yes)
-if test "x$HAVE_PKG_CONFIG" != "xyes" ; then
-  AC_MSG_WARN([pkg-config was not found on your system. external ffmpeg will be disabled])
-  use_external_ffmpeg="no"
-fi
 
 OS="unknown"
 ARCHITECTURE="unknown"
@@ -122,27 +111,20 @@ case "${host}" in
 esac
 
 ### External libraries checks
-# FFmpeg
-if test "$use_external_ffmpeg" = "yes"; then
-  PKG_CHECK_MODULES([FFMPEG], [libavcodec],
-                    [FFMPEG_INCLUDES="$FFMPEG_CFLAGS"; LIBS="$LIBS $FFMPEG_LIBS"],
-                    AC_MSG_ERROR(cannot find libavcodec))
-
-  # Possible places the ffmpeg headers may be
-  AC_CHECK_HEADERS([libavcodec/avcodec.h],[FFMPEG_INCLUDES="-I$($PKG_CONFIG --variable=includedir libavcodec)/libavcodec"],
-    [AC_CHECK_HEADERS([ffmpeg/avcodec.h],[FFMPEG_INCLUDES="-I$($PKG_CONFIG --variable=includedir libavcodec)/ffmpeg"],
-      [AC_MSG_ERROR(avcodec.h not found)])
-  ])
-
-  echo "FFMPEG_INCLUDES: $FFMPEG_INCLUDES"
-fi
-AC_SUBST(FFMPEG_INCLUDES)
-
 AC_CHECK_LIB([GL],[main],have_gl=yes, have_gl=no)  
 if test "$have_gl" = "yes"; then
   AC_DEFINE([HAVE_GL],[1],["Define to 1 if we have gl"])
 fi
 echo "GL: $have_gl"
+
+AC_CHECK_LIB([GLESv2],[main],have_gles2=yes, have_gles2=no)
+if test "$have_gles2" = "yes"; then
+  AC_DEFINE([HAVE_GLES2],[1],["Define to 1 if we have gles2"])
+  AM_CONDITIONAL(HAVE_GLES2, true)
+else
+  AM_CONDITIONAL(HAVE_GLES2, false)
+fi
+echo "GLES2: $have_gles2"
 
 ### End external Libraries 
 
@@ -173,10 +155,19 @@ if test "$build_addons_with_dependencies" = "yes"; then
     AC_DEFINE([HAVE_BOOST],[1],["Define to 1 if we have the `boost' headers"])
   fi
   echo "Boost: $use_boost"
+
+  AC_CHECK_LIB([z],[inflate], use_zlib=yes, use_zlib=no)
+  if test "$use_zlib" = "yes"; then
+    AC_DEFINE([HAVE_ZLIB],[1],["Define to 1 if we have the zlib library"])
+    ZLIB_LIBS='-lz'
+    AC_SUBST(ZLIB_LIBS)
+  fi
+  echo "Zlib: $use_zlib"
 fi
 
 ### Addons with dependencies
 AM_CONDITIONAL([ADDON_MYTHTV], [test "$build_addons_with_dependencies" = "yes" -a "$use_mysql" = "yes" -a "$use_boost" = "yes"])
+AM_CONDITIONAL([ADDON_IPTVSIMPLE], [test "$build_addons_with_dependencies" = "yes" -a "$use_zlib" = "yes"])
 
 ### Check for Intree building
 if test "x${cross_compiling}" = "xyes" || test "x${cross_compiling}" = "xmaybe"; then
@@ -278,6 +269,7 @@ AC_CONFIG_FILES([Makefile \
                  addons/pvr.vuplus/Makefile \
                  addons/pvr.vdr.vnsi/Makefile \
                  addons/pvr.mythtv.cmyth/Makefile \
+                 addons/pvr.iptvsimple/Makefile \
                  addons/pvr.argustv/addon/addon.xml
                  addons/pvr.demo/addon/addon.xml
                  addons/pvr.dvbviewer/addon/addon.xml
@@ -287,6 +279,7 @@ AC_CONFIG_FILES([Makefile \
                  addons/pvr.nextpvr/addon/addon.xml
                  addons/pvr.njoy/addon/addon.xml
                  addons/pvr.vdr.vnsi/addon/addon.xml
-                 addons/pvr.vuplus/addon/addon.xml])
+                 addons/pvr.vuplus/addon/addon.xml
+                 addons/pvr.iptvsimple/addon/addon.xml])
 
 AC_OUTPUT

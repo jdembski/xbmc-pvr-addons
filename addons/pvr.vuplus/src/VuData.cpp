@@ -1938,7 +1938,6 @@ void Vu::SendPowerstate()
 
 bool Vu::GetDeviceInfo()
 {
-  return true; //disable deviceinfo check because openwebif is currently broken
   CStdString url; 
   url.Format("%s%s", m_strURL.c_str(), "web/deviceinfo"); 
 
