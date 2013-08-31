@@ -2,6 +2,8 @@
 - sync with PVR API v1.8.0
 - add: timeshift support (based on Manuel Mausz DVBViewer Timeshift support)
 - enable deviceinfo API call again
+- remove implementation for lastplayedposition (XBMC handles this now)
+- remove loading of channel data from HDD
 
 1.7.8
 - fix: typo in settings.xml

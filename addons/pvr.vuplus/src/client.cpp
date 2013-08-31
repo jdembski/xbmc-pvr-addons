@@ -155,12 +155,6 @@ void ADDON_ReadSettings(void)
   else
     g_strIconPath = "";
   
-  /* read setting "channeldatapath" from settings.xml */
-  if (XBMC->GetSetting("channeldatapath", buffer))
-    g_strChannelDataPath = buffer;
-  else
-    g_strChannelDataPath = "/tmp/";
-
   if (!XBMC->GetSetting("usetimeshift", &g_bUseTimeshift))
     g_bUseTimeshift = false;
 

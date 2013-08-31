@@ -12,7 +12,6 @@
 
   <!-- Channels -->
   <category label="30019">
-    <setting id="channeldatapath" type="folder" label="30014" default="" />
     <setting label="30025" type="bool" id="onlyonegroup" default="false"/>
     <setting label="30026" type="text" id="onegroup" default="" enable="eq(-1,true)" />
     <setting label="30015" type="bool" id="checkgroups" default="true"/>
