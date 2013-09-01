@@ -48,8 +48,6 @@ std::string g_szUserPath              = "";
 std::string g_strIconPath             = "";
 bool        g_bAutomaticTimerlistCleanup = false;
 bool        g_bZap                    = false;
-bool        g_bCheckForGroupUpdates   = true;
-bool        g_bCheckForChannelUpdates = true;
 bool        g_bOnlyCurrentLocation    = false;
 bool        g_bSetPowerstate          = false;
 bool        g_bOnlyOneGroup           = false;
@@ -118,14 +116,6 @@ void ADDON_ReadSettings(void)
   /* read setting "setpowerstate" from settings.xml */
   if (!XBMC->GetSetting("setpowerstate", &g_bSetPowerstate))
     g_bSetPowerstate = false;
-  
-  /* read setting "checkgroups" from settings.xml */
-  if (!XBMC->GetSetting("checkgroups", &g_bCheckForGroupUpdates))
-    g_bCheckForGroupUpdates = true;
-  
-  /* read setting "showcompleted" from settings.xml */
-  if (!XBMC->GetSetting("checkchannels", &g_bCheckForChannelUpdates))
-    g_bCheckForChannelUpdates = true;
   
   /* read setting "zap" from settings.xml */
   if (!XBMC->GetSetting("zap", &g_bZap))

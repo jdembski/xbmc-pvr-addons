@@ -14,8 +14,6 @@
   <category label="30019">
     <setting label="30025" type="bool" id="onlyonegroup" default="false"/>
     <setting label="30026" type="text" id="onegroup" default="" enable="eq(-1,true)" />
-    <setting label="30015" type="bool" id="checkgroups" default="true"/>
-    <setting label="30016" type="bool" id="checkchannels" default="true"/>
     <setting label="30013" type="bool" id="zap" default="false"/>
   </category>
 

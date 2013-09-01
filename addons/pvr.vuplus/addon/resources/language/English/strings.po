@@ -65,18 +65,6 @@ msgctxt "#30013"
 msgid "Zap before channelswitch (i.e. for Single Tuner boxes)"
 msgstr ""
 
-msgctxt "#30014"
-msgid "Folder for channeldata"
-msgstr ""
-
-msgctxt "#30015"
-msgid "Check for bouquett updates"
-msgstr ""
-
-msgctxt "#30016"
-msgid "Check for channel updates"
-msgstr ""
-
 msgctxt "#30017"
 msgid "Use only the DVB boxes' current recording path"
 msgstr ""
