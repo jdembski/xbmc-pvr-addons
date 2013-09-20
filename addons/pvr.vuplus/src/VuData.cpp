@@ -8,6 +8,8 @@
 using namespace ADDON;
 using namespace PLATFORM;
 
+bool Vu::m_bInitialEPG = true;
+
 bool CCurlFile::Get(const std::string &strURL, std::string &strResult)
 {
   void* fileHandle = XBMC->OpenFile(strURL.c_str(), 0);
@@ -25,7 +27,7 @@ bool CCurlFile::Get(const std::string &strURL, std::string &strResult)
 std::string& Vu::Escape(std::string &s, std::string from, std::string to)
 { 
   int pos = -1;
-  while ( (pos = s.find(from, pos+1) ) != std::string::npos)         
+  while ( (pos = s.find(from, pos+1) ) != (int)std::string::npos)         
     s.erase(pos, from.length()).insert(pos, to);        
 
   return s;     
@@ -185,7 +187,6 @@ Vu::Vu()
   m_iCurrentChannel = -1;
   m_iClientIndexCounter = 1;
 
-  m_bInitial = false;
   m_bUpdating = false;
   m_iUpdateTimer = 0;
   m_tsBuffer = NULL;
@@ -232,12 +233,29 @@ void  *Vu::Process()
 {
   XBMC->Log(LOG_DEBUG, "%s - starting", __FUNCTION__);
 
+  // Wait for the initial EPG update to complete 
+  bool bwait = true;
+
+  while (m_bInitialEPG == true) 
+  {
+    XBMC->Log(LOG_DEBUG, "%s Initial EPG update not complete, wait another second!", __FUNCTION__);
+    Sleep(1000);
+  }
+
+  // Trigger "Real" EPG updates 
+  for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
+  {
+    XBMC->Log(LOG_DEBUG, "%s - Trigger EPG update for channel '%d'", __FUNCTION__, iChannelPtr);
+    PVR->TriggerEpgUpdate(m_channels.at(iChannelPtr).iUniqueId);
+  }
+
+
   while(!IsStopped())
   {
     Sleep(5 * 1000);
     m_iUpdateTimer += 5;
 
-    if (((int)m_iUpdateTimer > (g_iUpdateInterval * 60)) || (m_bInitial == false))
+    if ((int)m_iUpdateTimer > (g_iUpdateInterval * 60)) 
     {
       m_iUpdateTimer = 0;
  
@@ -415,6 +433,7 @@ bool Vu::LoadChannels(CStdString strServiceReference, CStdString strGroupName)
 
     VuChannel newChannel;
     newChannel.bRadio = bRadio;
+    newChannel.bInitialEPG = true;
     newChannel.strGroupName = strGroupName;
     newChannel.iUniqueId = m_channels.size()+1;
     newChannel.iChannelNumber = m_channels.size()+1;
@@ -579,6 +598,159 @@ Vu::~Vu()
     SAFE_DELETE(m_tsBuffer);
 }
 
+bool Vu::GetInitialEPGForGroup(VuChannelGroup &group)
+{
+  // is the addon is currently updating the channels, then delay the call
+  unsigned int iTimer = 0;
+  while(m_bUpdating == true && iTimer < 120)
+  {
+    Sleep(1000);
+    iTimer++;
+  }
+
+  CStdString url;
+  url.Format("%s%s%s",  m_strURL.c_str(), "web/epgnownext?bRef=",  URLEncodeInline(group.strServiceReference.c_str())); 
+ 
+  CStdString strXML;
+  strXML = GetHttpXML(url);
+
+  int iNumEPG = 0;
+  
+  TiXmlDocument xmlDoc;
+  if (!xmlDoc.Parse(strXML.c_str()))
+  {
+    XBMC->Log(LOG_DEBUG, "Unable to parse XML: %s at line %d", xmlDoc.ErrorDesc(), xmlDoc.ErrorRow());
+    return false;
+  }
+
+  TiXmlHandle hDoc(&xmlDoc);
+  TiXmlElement* pElem;
+  TiXmlHandle hRoot(0);
+
+  pElem = hDoc.FirstChildElement("e2eventlist").Element();
+ 
+  if (!pElem)
+  {
+    XBMC->Log(LOG_DEBUG, "%s could not find <e2eventlist> element!", __FUNCTION__);
+    // Return "NO_ERROR" as the EPG could be empty for this channel
+    return false;
+  }
+
+  hRoot=TiXmlHandle(pElem);
+
+  TiXmlElement* pNode = hRoot.FirstChildElement("e2event").Element();
+
+  if (!pNode)
+  {
+    XBMC->Log(LOG_DEBUG, "Could not find <e2event> element");
+    // RETURN "NO_ERROR" as the EPG could be empty for this channel
+    return false;
+  }
+  
+  for (; pNode != NULL; pNode = pNode->NextSiblingElement("e2event"))
+  {
+    CStdString strTmp;
+
+    int iTmpStart;
+    int iTmp;
+
+    // check and set event starttime and endtimes
+    if (!XMLUtils::GetInt(pNode, "e2eventstart", iTmpStart)) 
+      continue;
+
+    if (!XMLUtils::GetInt(pNode, "e2eventduration", iTmp))
+      continue;
+
+    VuEPGEntry entry;
+    entry.startTime = iTmpStart;
+    entry.endTime = iTmpStart + iTmp;
+
+    if (!XMLUtils::GetInt(pNode, "e2eventid", entry.iEventId))  
+      continue;
+
+    
+    if(!XMLUtils::GetString(pNode, "e2eventtitle", strTmp))
+      continue;
+
+    entry.strTitle = strTmp;
+
+    if(!XMLUtils::GetString(pNode, "e2eventservicereference", strTmp))
+      continue;
+
+    entry.strServiceReference = strTmp;
+    
+    entry.iChannelId = GetChannelNumber(entry.strServiceReference.c_str());
+
+    if (XMLUtils::GetString(pNode, "e2eventdescriptionextended", strTmp))
+      entry.strPlot = strTmp;
+
+    if (XMLUtils::GetString(pNode, "e2eventdescription", strTmp))
+       entry.strPlotOutline = strTmp;
+
+    iNumEPG++; 
+    
+    group.initialEPG.push_back(entry);
+  }
+
+  XBMC->Log(LOG_INFO, "%s Loaded %u EPG Entries for group '%s'", __FUNCTION__, iNumEPG, group.strGroupName.c_str());
+  return true;
+}
+
+PVR_ERROR Vu::GetInitialEPGForChannel(ADDON_HANDLE handle, const VuChannel &channel, time_t iStart, time_t iEnd)
+{
+  if (m_iNumChannelGroups < 1)
+    return PVR_ERROR_SERVER_ERROR;
+
+  XBMC->Log(LOG_DEBUG, "%s Fetch information for group '%s'", __FUNCTION__, channel.strGroupName.c_str());
+
+  VuChannelGroup &myGroup = m_groups.at(0);
+  for (int i = 0;i<m_iNumChannelGroups;  i++) 
+  {
+    myGroup = m_groups.at(i);
+    if (!myGroup.strGroupName.compare(channel.strGroupName))
+      if (myGroup.initialEPG.size() == 0)
+      {
+        GetInitialEPGForGroup(myGroup);
+        break;
+      }
+  }
+
+  XBMC->Log(LOG_DEBUG, "%s initialEPG size is now '%d'", __FUNCTION__, myGroup.initialEPG.size());
+  
+  for (unsigned int i = 0;i<myGroup.initialEPG.size();  i++) 
+  {
+    VuEPGEntry &entry = myGroup.initialEPG.at(i);
+    if (!channel.strServiceReference.compare(entry.strServiceReference)) 
+    {
+      EPG_TAG broadcast;
+      memset(&broadcast, 0, sizeof(EPG_TAG));
+
+      broadcast.iUniqueBroadcastId  = entry.iEventId;
+      broadcast.strTitle            = entry.strTitle.c_str();
+      broadcast.iChannelNumber      = channel.iChannelNumber;
+      broadcast.startTime           = entry.startTime;
+      broadcast.endTime             = entry.endTime;
+      broadcast.strPlotOutline      = entry.strPlotOutline.c_str();
+      broadcast.strPlot             = entry.strPlot.c_str();
+      broadcast.strIconPath         = ""; // unused
+      broadcast.iGenreType          = 0; // unused
+      broadcast.iGenreSubType       = 0; // unused
+      broadcast.strGenreDescription = "";
+      broadcast.firstAired          = 0;  // unused
+      broadcast.iParentalRating     = 0;  // unused
+      broadcast.iStarRating         = 0;  // unused
+      broadcast.bNotify             = false;
+      broadcast.iSeriesNumber       = 0;  // unused
+      broadcast.iEpisodeNumber      = 0;  // unused
+      broadcast.iEpisodePartNumber  = 0;  // unused
+      broadcast.strEpisodeName      = ""; // unused
+
+      PVR->TransferEpgEntry(handle, &broadcast);
+    }
+  }
+  return PVR_ERROR_NO_ERROR;
+}
+
 PVR_ERROR Vu::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
 {
   // is the addon is currently updating the channels, then delay the call
@@ -597,6 +769,24 @@ PVR_ERROR Vu::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, 
 
   VuChannel myChannel;
   myChannel = m_channels.at(channel.iUniqueId-1);
+
+  // Check if the initial short import has already been done for this channel
+  if (m_channels.at(channel.iUniqueId-1).bInitialEPG == true)
+  {
+    m_channels.at(channel.iUniqueId-1).bInitialEPG = false;
+  
+    // Check if all channels have completed the initial EPG import
+    m_bInitialEPG = false;
+    for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
+    {
+      if (m_channels.at(iChannelPtr).bInitialEPG == true) 
+      {
+        m_bInitialEPG = true;
+      }
+    }
+
+    return GetInitialEPGForChannel(handle, myChannel, iStart, iEnd);
+  }
 
   CStdString url;
   url.Format("%s%s%s",  m_strURL.c_str(), "web/epgservice?sRef=",  URLEncodeInline(myChannel.strServiceReference.c_str())); 
