@@ -214,6 +214,6 @@ public:
   long long SeekLiveStream(long long iPosition, int iWhence /* = SEEK_SET */);
   long long PositionLiveStream(void);
   long long LengthLiveStream(void);
-  static bool m_bInitialEPG;
+  bool m_bInitialEPG;
 };
 

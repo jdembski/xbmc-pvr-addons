@@ -8,8 +8,6 @@
 using namespace ADDON;
 using namespace PLATFORM;
 
-bool Vu::m_bInitialEPG = true;
-
 bool CCurlFile::Get(const std::string &strURL, std::string &strResult)
 {
   void* fileHandle = XBMC->OpenFile(strURL.c_str(), 0);
@@ -190,6 +188,7 @@ Vu::Vu()
   m_bUpdating = false;
   m_iUpdateTimer = 0;
   m_tsBuffer = NULL;
+  m_bInitialEPG = true;
 }
 
 bool Vu::Open()
