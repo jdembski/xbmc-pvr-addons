@@ -204,6 +204,10 @@ bool Vu::Open()
   XBMC->Log(LOG_NOTICE, "%s - Hostname: '%s'", __FUNCTION__, g_strHostname.c_str());
   XBMC->Log(LOG_NOTICE, "%s - WebPort: '%d'", __FUNCTION__, g_iPortWeb);
   XBMC->Log(LOG_NOTICE, "%s - StreamPort: '%d'", __FUNCTION__, g_iPortStream);
+  if (!g_bUseSecureHTTP)
+    XBMC->Log(LOG_NOTICE, "%s Use HTTPS: 'false'", __FUNCTION__);
+  else
+    XBMC->Log(LOG_NOTICE, "%s Use HTTPS: 'true'", __FUNCTION__);
   
   m_bIsConnected = GetDeviceInfo();
 
