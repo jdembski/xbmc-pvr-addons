@@ -52,6 +52,7 @@ bool        g_bOnlyCurrentLocation    = false;
 bool        g_bSetPowerstate          = false;
 bool        g_bOnlyOneGroup           = false;
 bool        g_bOnlinePicons           = true;
+bool        g_bUseSecureHTTP          = false;
 std::string g_strOneGroup             = "";
 std::string g_szClientPath            = "";
 std::string g_strChannelDataPath      = "/tmp/";

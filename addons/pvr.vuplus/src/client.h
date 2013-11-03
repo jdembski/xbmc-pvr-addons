@@ -63,6 +63,7 @@ extern std::string               g_szUserPath;
 extern std::string               g_szClientPath;
 extern std::string               g_strChannelDataPath;
 extern bool                      g_bUseTimeshift;
+extern bool                      g_bUseSecureHTTP;
 extern std::string               g_strTimeshiftBufferPath;
 extern ADDON::CHelper_libXBMC_addon *   XBMC;
 extern CHelper_libXBMC_pvr *     PVR;

@@ -21,6 +21,7 @@
   <category label="30020">
     <setting id="streamport" type="number" label="30002" default="8001" />
     <setting id="webport" type="number" label="30012" default="80" />
+    <setting label="30028" type="bool" id="use_secure" default="false"/>
     <setting id="user" type="text" label="30003" default="" />
     <setting id="pass" type="text" label="30004" option="hidden" default="" />
     <setting id="recordingpath" type="text" label="30023" default="" />

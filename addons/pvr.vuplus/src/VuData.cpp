@@ -177,7 +177,12 @@ Vu::Vu()
   // simply add user@pass in front of the URL if username/password is set
   if ((g_strUsername.length() > 0) && (g_strPassword.length() > 0))
     strURL.Format("%s:%s@", g_strUsername.c_str(), g_strPassword.c_str());
-  strURL.Format("http://%s%s:%u/", strURL.c_str(), g_strHostname.c_str(), g_iPortWeb);
+  
+  if (g_bUseSecureHTTP)
+    strURL.Format("http://%s%s:%u/", strURL.c_str(), g_strHostname.c_str(), g_iPortWeb);
+  else
+    strURL.Format("https://%s%s:%u/", strURL.c_str(), g_strHostname.c_str(), g_iPortWeb);
+  
   m_strURL = strURL.c_str();
 
   m_iNumRecordings = 0;
@@ -479,8 +484,12 @@ bool Vu::LoadChannels(CStdString strServiceReference, CStdString strGroupName)
 
     if ((g_strUsername.length() > 0) && (g_strPassword.length() > 0))
       strTmp.Format("%s:%s@", g_strUsername.c_str(), g_strPassword.c_str());
-
-    strTmp.Format("http://%s%s:%d/%s", strTmp.c_str(), g_strHostname, g_iPortStream, strTmp2.c_str());
+    
+    if (g_bUseSecureHTTP)
+      strTmp.Format("http://%s%s:%d/%s", strTmp.c_str(), g_strHostname, g_iPortStream, strTmp2.c_str());
+    else
+      strTmp.Format("http://%s%s:%d/%s", strTmp.c_str(), g_strHostname, g_iPortStream, strTmp2.c_str());
+    
     newChannel.strStreamURL = strTmp;
 
     if (g_bOnlinePicons == true)

@@ -109,6 +109,10 @@ msgctxt "#30027"
 msgid "Fetch picons from webinterface"
 msgstr ""
 
+msgctxt "#30028"
+msgid "Use https"
+msgstr ""
+
 msgctxt "#30100"
 msgid "Enable Timeshift"
 msgstr ""
