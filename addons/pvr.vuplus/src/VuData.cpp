@@ -209,7 +209,7 @@ bool Vu::Open()
   else
     XBMC->Log(LOG_NOTICE, "%s Use HTTPS: 'true'", __FUNCTION__);
   
-  m_bIsConnected = GetDeviceInfo();
+  m_bIsConnected = true; // GetDeviceInfo();
 
   if (!m_bIsConnected)
   {

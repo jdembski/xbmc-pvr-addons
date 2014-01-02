@@ -1,6 +1,5 @@
 1.9.10
 - add: timeshift support (based on Manuel Mausz DVBViewer Timeshift support)
-- change: enable deviceinfo API call again
 - remove: implementation for lastplayedposition (XBMC handles this now)
 - remove: loading of channel data from HDD
 - change: handling of EPG 
