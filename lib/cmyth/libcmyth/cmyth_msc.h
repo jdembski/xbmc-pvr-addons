@@ -32,15 +32,16 @@
 #include <malloc.h>
 #include <winsock2.h>
 #include <Ws2tcpip.h>
+#include <time.h>
 
 #pragma warning(disable:4267)
 #pragma warning(disable:4996)
 
+#define pthread_mutex_init(a, b) InitializeCriticalSection(a)
+#define pthread_mutex_destroy(a) DeleteCriticalSection(a)
 #define pthread_mutex_lock(a) EnterCriticalSection(a)
 #define pthread_mutex_unlock(a) LeaveCriticalSection(a)
-#define PTHREAD_MUTEX_INITIALIZER InitializeCriticalSection(&mutex);
 typedef CRITICAL_SECTION pthread_mutex_t;
-extern pthread_mutex_t mutex;
 
 #define SHUT_RDWR SD_BOTH
 
@@ -48,6 +49,7 @@ typedef SOCKET cmyth_socket_t;
 typedef int socklen_t;
 
 #define snprintf _snprintf
+#define gmtime_r(a, b) gmtime_s(b, a)
 #define sleep(a) Sleep(a*1000)
 #define usleep(a) Sleep(a/1000)
 

@@ -49,6 +49,10 @@
 #include "config.h"
 #include "cxsocket.h"
 
+#ifndef MSG_MORE
+#define MSG_MORE 0
+#endif
+
 cxSocket::~cxSocket()
 {
   close();
@@ -60,6 +64,14 @@ void cxSocket::close() {
   if(m_fd >= 0) { 
     ::close(m_fd);
     m_fd=-1; 
+  }
+}
+
+void cxSocket::Shutdown()
+{
+  if(m_fd >= 0)
+  {
+    ::shutdown(m_fd, SHUT_RD);
   }
 }
 

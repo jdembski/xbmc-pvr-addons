@@ -20,6 +20,7 @@
 
 #include "MythDatabase.h"
 #include "MythChannel.h"
+#include "MythEPGInfo.h"
 #include "MythProgramInfo.h"
 #include "MythRecordingRule.h"
 #include "MythPointer.h"
@@ -87,24 +88,39 @@ CStdString MythDatabase::GetSetting(const CStdString &setting)
   return data;
 }
 
-bool MythDatabase::FindProgram(time_t starttime, int channelid, const CStdString &title, MythProgram* program)
+bool MythDatabase::FindProgram(time_t starttime, int channelid, const CStdString &title, MythEPGInfo &epgInfo)
 {
   int retval = 0;
-  CMYTH_DB_CALL(retval, retval < 0, cmyth_mysql_get_prog_finder_time_title_chan(*m_database_t, program, starttime, const_cast<char*>(title.c_str()), channelid));
+  cmyth_epginfo_t epg = NULL;
+  CMYTH_DB_CALL(retval, retval < 0, cmyth_mysql_get_prog_finder_time_title_chan(*m_database_t, &epg, starttime, const_cast<char*>(title.c_str()), channelid));
+  epgInfo = MythEPGInfo(epg);
   return retval > 0;
 }
 
-ProgramList MythDatabase::GetGuide(int channelid, time_t starttime, time_t endtime)
+bool MythDatabase::FindCurrentProgram(time_t attime, int channelid, MythEPGInfo &epgInfo)
 {
-  MythProgram *programs = 0;
-  int len = 0;
-  CMYTH_DB_CALL(len, len < 0, cmyth_mysql_get_guide(*m_database_t, &programs, channelid, starttime, endtime));
+  int retval = 0;
+  cmyth_epginfo_t epg = NULL;
+  CMYTH_DB_CALL(retval, retval < 0, cmyth_mysql_get_prog_finder_chan(*m_database_t, &epg, attime, channelid));
+  epgInfo = MythEPGInfo(epg);
+  return retval > 0;
+}
 
-  if (len < 1)
-    return ProgramList();
+EPGInfoMap MythDatabase::GetGuide(int channelid, time_t starttime, time_t endtime)
+{
+  int ret;
+  EPGInfoMap retval;
+  cmyth_epginfolist_t epgInfoList = NULL;
+  CMYTH_DB_CALL(ret, ret < 0, cmyth_mysql_get_guide(*m_database_t, &epgInfoList, channelid, starttime, endtime));
+  int epgCount = cmyth_epginfolist_get_count(epgInfoList);
 
-  ProgramList retval(programs, programs + len);
-  ref_release(programs);
+  for (int i = 0; i < epgCount; i++)
+  {
+    cmyth_epginfo_t epg = cmyth_epginfolist_get_item(epgInfoList, i);
+    MythEPGInfo epgInfo = MythEPGInfo(epg);
+    retval.insert(std::make_pair(epgInfo.StartTime(), epgInfo));
+  }
+  ref_release(epgInfoList);
   return retval;
 }
 
@@ -120,8 +136,7 @@ ChannelIdMap MythDatabase::GetChannels()
   {
     cmyth_channel_t channel = cmyth_chanlist_get_item(channels, i);
     int channelID = cmyth_channel_chanid(channel);
-    bool isRadio = cmyth_mysql_is_radio(*m_database_t, channelID) == 1;
-    retval.insert(std::pair<int, MythChannel>(channelID, MythChannel(channel, isRadio)));
+    retval.insert(std::pair<int, MythChannel>(channelID, MythChannel(channel)));
   }
   ref_release(channels);
   return retval;
@@ -145,12 +160,12 @@ ChannelGroupMap MythDatabase::GetChannelGroups()
     if (channelCount > 0)
     {
       retval.insert(std::make_pair(channelGroups[i].name, std::vector<int>(channelIDs, channelIDs + channelCount)));
-      ref_release(channelIDs);
     }
     else
     {
       retval.insert(std::make_pair(channelGroups[i].name, std::vector<int>()));
     }
+    ref_release(channelIDs);
   }
   ref_release(channelGroups);
   return retval;
@@ -204,10 +219,10 @@ bool MythDatabase::UpdateRecordingRule(const MythRecordingRule &rule)
   return retval > 0;
 }
 
-bool MythDatabase::DeleteRecordingRule(unsigned int recordid)
+bool MythDatabase::DeleteRecordingRule(const MythRecordingRule &rule)
 {
   int retval = 0;
-  CMYTH_DB_CALL(retval, retval < 0, cmyth_mysql_delete_recordingrule(*m_database_t, recordid));
+  CMYTH_DB_CALL(retval, retval < 0, cmyth_mysql_delete_recordingrule(*m_database_t, *rule.m_recordingrule_t));
   return retval > 0;
 }
 
@@ -259,10 +274,10 @@ long long MythDatabase::GetBookmarkMark(const MythProgramInfo &recording, long l
   return mark;
 }
 
-long long MythDatabase::GetRecordingMarkup(const MythProgramInfo &recording, int type)
+long long MythDatabase::GetRecordingMarkup(const MythProgramInfo &recording, cmyth_recording_markup_t type)
 {
   long long value = 0;
-  CMYTH_DB_CALL(value, value < 0, cmyth_mysql_get_recording_markup(*m_database_t, *recording.m_proginfo_t, (cmyth_recording_markup_t)type));
+  CMYTH_DB_CALL(value, value < 0, cmyth_mysql_get_recording_markup(*m_database_t, *recording.m_proginfo_t, type));
   return value;
 }
 
@@ -271,6 +286,13 @@ long long MythDatabase::GetRecordingFrameRate(const MythProgramInfo &recording)
   long long value = 0;
   CMYTH_DB_CALL(value, value < 0, cmyth_mysql_get_recording_framerate(*m_database_t, *recording.m_proginfo_t));
   return value;
+}
+
+int MythDatabase::GetRecordingSeekOffset(const MythProgramInfo &recording, cmyth_recording_markup_t type, int64_t mark, int64_t *psoffset, int64_t *nsoffset)
+{
+  int mask = 0;
+  CMYTH_DB_CALL(mask, mask < 0, cmyth_mysql_get_recording_seek_offset(*m_database_t, *recording.m_proginfo_t, type, mark, psoffset, nsoffset));
+  return mask;
 }
 
 bool MythDatabase::FillRecordingArtwork(MythProgramInfo &recording)
@@ -291,3 +313,11 @@ bool MythDatabase::FillRecordingArtwork(MythProgramInfo &recording)
   }
   return false;
 }
+
+bool MythDatabase::KeepLiveTVRecording(MythProgramInfo& recording, bool keep)
+{
+  int retval = 0;
+  CMYTH_DB_CALL(retval, retval < 0, cmyth_mysql_keep_livetv_recording(*m_database_t, *recording.m_proginfo_t, (keep ? 1 : 0)));
+  return (retval > 0);
+}
+

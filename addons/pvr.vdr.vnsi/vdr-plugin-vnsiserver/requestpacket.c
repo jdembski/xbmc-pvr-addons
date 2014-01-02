@@ -28,7 +28,13 @@
 #include <stdint.h>
 #include <string.h>
 
+#ifndef __FreeBSD__
 #include <asm/byteorder.h>
+#else
+#include <sys/endian.h>
+#define __be64_to_cpu be64toh
+#define __cpu_to_be64 htobe64
+#endif
 
 #include "config.h"
 #include "requestpacket.h"
@@ -100,6 +106,16 @@ uint64_t cRequestPacket::extract_U64()
   ull = __be64_to_cpu(ull);
   packetPos += sizeof(uint64_t);
   return ull;
+}
+
+int64_t cRequestPacket::extract_S64()
+{
+  if ((packetPos + sizeof(int64_t)) > userDataLength) return 0;
+  int64_t ll;
+  memcpy(&ll, &userData[packetPos], sizeof(int64_t));
+  ll = __be64_to_cpu(ll);
+  packetPos += sizeof(int64_t);
+  return ll;
 }
 
 double cRequestPacket::extract_Double()

@@ -31,13 +31,13 @@ extern "C" {
 };
 
 class MythChannel;
+class MythEPGInfo;
 class MythRecordingRule;
 class MythProgramInfo;
 
 template <class T> class MythPointerThreadSafe;
 
-typedef cmyth_program_t MythProgram;
-typedef std::vector<MythProgram> ProgramList;
+typedef std::map<time_t, MythEPGInfo> EPGInfoMap;
 
 typedef std::map<int, MythChannel> ChannelIdMap;
 typedef std::multimap<CStdString, MythChannel> ChannelNumberMap;
@@ -70,8 +70,9 @@ public:
 
   CStdString GetSetting(const CStdString &setting);
 
-  bool FindProgram(time_t starttime, int channelid, const CStdString &title, MythProgram* pprogram);
-  ProgramList GetGuide(int channelid, time_t starttime, time_t endtime);
+  bool FindProgram(time_t starttime, int channelid, const CStdString &title, MythEPGInfo &epgInfo);
+  bool FindCurrentProgram(time_t attime, int channelid, MythEPGInfo &epgInfo);
+  EPGInfoMap GetGuide(int channelid, time_t starttime, time_t endtime);
 
   ChannelIdMap GetChannels();
   ChannelGroupMap GetChannelGroups();
@@ -81,7 +82,7 @@ public:
   RecordingRuleMap GetRecordingRules();
   bool AddRecordingRule(const MythRecordingRule &rule);
   bool UpdateRecordingRule(const MythRecordingRule &rule);
-  bool DeleteRecordingRule(unsigned int recordid);
+  bool DeleteRecordingRule(const MythRecordingRule &rule);
   MythRecordingRule LoadRecordingRuleTemplate(const CStdString &category, const CStdString &category_type);
 
   RecordingProfileList GetRecordingProfiles();
@@ -89,10 +90,12 @@ public:
   bool SetWatchedStatus(const MythProgramInfo &recording, bool watched);
   long long GetBookmarkMark(const MythProgramInfo &recording, long long bk, int mode);
 
-  long long GetRecordingMarkup(const MythProgramInfo &recording, int type);
+  long long GetRecordingMarkup(const MythProgramInfo &recording, cmyth_recording_markup_t type);
   long long GetRecordingFrameRate(const MythProgramInfo &recording);
+  int GetRecordingSeekOffset(const MythProgramInfo &recording, cmyth_recording_markup_t type, int64_t mark, int64_t *psoffset, int64_t *nsoffset);
 
   bool FillRecordingArtwork(MythProgramInfo &recording);
+  bool KeepLiveTVRecording(MythProgramInfo &recording, bool keep);
 
 private:
   boost::shared_ptr<MythPointerThreadSafe<cmyth_database_t> > m_database_t;

@@ -36,12 +36,16 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
 
 #include <vdr/plugin.h>
 #include <vdr/shutdown.h>
+#include <vdr/videodir.h>
 
+#include "vnsi.h"
 #include "vnsiserver.h"
 #include "vnsiclient.h"
+#include "channelfilter.h"
 
 unsigned int cVNSIServer::m_IdCnt = 0;
 
@@ -80,6 +84,9 @@ cVNSIServer::cVNSIServer(int listenPort) : cThread("VDR VNSI Server")
     ERRORLOG("cVNSIServer: missing ConfigDirectory!");
     m_AllowedHostsFile = cString::sprintf("/video/" ALLOWED_HOSTS_FILE);
   }
+
+  VNSIChannelFilter.Load();
+  VNSIChannelFilter.SortChannels();
 
   m_ServerFD = socket(AF_INET, SOCK_STREAM, 0);
   if(m_ServerFD == -1)
@@ -156,6 +163,7 @@ void cVNSIServer::NewClientConnected(int fd)
   int val = 1;
   setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val));
 
+#ifdef SOL_TCP
   val = 30;
   setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, &val, sizeof(val));
 
@@ -167,6 +175,7 @@ void cVNSIServer::NewClientConnected(int fd)
 
   val = 1;
   setsockopt(fd, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
+#endif
 
   INFOLOG("Client with ID %d connected: %s", m_IdCnt, cxSocket::ip2txt(sin.sin_addr.s_addr, sin.sin_port, buf));
   cVNSIClient *connection = new cVNSIClient(fd, m_IdCnt, cxSocket::ip2txt(sin.sin_addr.s_addr, sin.sin_port, buf));
@@ -179,6 +188,8 @@ void cVNSIServer::Action(void)
   fd_set fds;
   struct timeval tv;
 
+  cTimeMs chanTimer(0);
+
   // get initial state of the recordings
   int recState = -1;
   Recordings.StateChanged(recState);
@@ -189,6 +200,29 @@ void cVNSIServer::Action(void)
 
   // last update of epg
   time_t epgUpdate = cSchedules::Modified();
+
+  // delete old timeshift file
+  cString cmd;
+  struct stat sb;
+  if ((*TimeshiftBufferDir) && stat(TimeshiftBufferDir, &sb) == 0 && S_ISDIR(sb.st_mode))
+  {
+    if (TimeshiftBufferDir[strlen(TimeshiftBufferDir)-1] == '/')
+      cmd = cString::sprintf("rm -f %s*.vnsi", TimeshiftBufferDir);
+    else
+      cmd = cString::sprintf("rm -f %s/*.vnsi", TimeshiftBufferDir);
+  }
+  else
+  {
+#if VDRVERSNUM >= 20102
+    cmd = cString::sprintf("rm -f %s/*.vnsi", cVideoDirectory::Name());
+#else
+    cmd = cString::sprintf("rm -f %s/*.vnsi", VideoDirectory);
+#endif
+  }
+  int ret = system(cmd);
+
+  // set thread priority
+  SetPriority(1);
 
   while (Running())
   {
@@ -221,16 +255,17 @@ void cVNSIServer::Action(void)
       }
 
       // trigger clients to reload the modified channel list
-      if(m_clients.size() > 0)
+      if(m_clients.size() > 0 && chanTimer.TimedOut())
       {
-        Channels.Lock(false);
-        if(Channels.Modified() != 0)
+        int modified = Channels.Modified();
+        if (modified)
         {
+          Channels.SetModified((modified == CHANNELSMOD_USER) ? true : false);
           INFOLOG("Requesting clients to reload channel list");
           for (ClientList::iterator i = m_clients.begin(); i != m_clients.end(); i++)
             (*i)->ChannelChange();
         }
-        Channels.Unlock();
+        chanTimer.Set(5000);
       }
 
       // reset inactivity timeout as long as there are clients connected

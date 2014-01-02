@@ -27,7 +27,7 @@
 #define VNSI_COMMAND_H
 
 /** Current VNSI Protocol Version number */
-#define VNSI_PROTOCOLVERSION 3
+#define VNSI_PROTOCOLVERSION 5
 
 /** Packet types */
 #define VNSI_CHANNEL_REQUEST_RESPONSE 1
@@ -40,15 +40,24 @@
 
 /** Response packets operation codes */
 
+#define CONFNAME_PMTTIMEOUT "PmtTimeout"
+#define CONFNAME_TIMESHIFT "Timeshift"
+#define CONFNAME_TIMESHIFTBUFFERSIZE "TimeshiftBufferSize"
+#define CONFNAME_TIMESHIFTBUFFERFILESIZE "TimeshiftBufferFileSize"
+#define CONFNAME_TIMESHIFTBUFFERDIR "TimeshiftBufferDir"
+
 /* OPCODE 1 - 19: VNSI network functions for general purpose */
 #define VNSI_LOGIN                 1
 #define VNSI_GETTIME               2
 #define VNSI_ENABLESTATUSINTERFACE 3
 #define VNSI_PING                  7
+#define VNSI_GETSETUP              8
+#define VNSI_STORESETUP            9
 
 /* OPCODE 20 - 39: VNSI network functions for live streaming */
-#define VNSI_CHANNELSTREAM_OPEN    20
-#define VNSI_CHANNELSTREAM_CLOSE   21
+#define VNSI_CHANNELSTREAM_OPEN     20
+#define VNSI_CHANNELSTREAM_CLOSE    21
+#define VNSI_CHANNELSTREAM_SEEK     22
 
 /* OPCODE 40 - 59: VNSI network functions for recording streaming */
 #define VNSI_RECSTREAM_OPEN        40
@@ -64,6 +73,11 @@
 #define VNSI_CHANNELGROUP_GETCOUNT 65
 #define VNSI_CHANNELGROUP_LIST     66
 #define VNSI_CHANNELGROUP_MEMBERS  67
+#define VNSI_CHANNELS_GETCAIDS     68
+#define VNSI_CHANNELS_GETWHITELIST 69
+#define VNSI_CHANNELS_GETBLACKLIST 70
+#define VNSI_CHANNELS_SETWHITELIST 71
+#define VNSI_CHANNELS_SETBLACKLIST 72
 
 /* OPCODE 80 - 99: VNSI network functions for timer access */
 #define VNSI_TIMER_GETCOUNT        80
@@ -79,6 +93,7 @@
 #define VNSI_RECORDINGS_GETLIST    102
 #define VNSI_RECORDINGS_RENAME     103
 #define VNSI_RECORDINGS_DELETE     104
+#define VNSI_RECORDINGS_GETEDL     105
 
 /* OPCODE 120 - 139: VNSI network functions for epg access and manipulating */
 #define VNSI_EPG_GETFORCHANNEL     120
@@ -102,6 +117,8 @@
 #define VNSI_STREAM_MUXPKT       4
 #define VNSI_STREAM_SIGNALINFO   5
 #define VNSI_STREAM_CONTENTINFO  6
+#define VNSI_STREAM_BUFFERSTATS  7
+#define VNSI_STREAM_REFTIME      8
 
 /** Scan packet types (server -> client) */
 #define VNSI_SCANNER_PERCENTAGE  1

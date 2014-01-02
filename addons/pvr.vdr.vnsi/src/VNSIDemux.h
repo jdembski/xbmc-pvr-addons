@@ -24,6 +24,7 @@
 #include "client.h"
 #include <string>
 #include <map>
+#include "xbmc_stream_utils.hpp"
 
 class cResponsePacket;
 
@@ -51,6 +52,11 @@ public:
   bool SwitchChannel(const PVR_CHANNEL &channelinfo);
   int CurrentChannel() { return m_channelinfo.iChannelNumber; }
   bool GetSignalStatus(PVR_SIGNAL_STATUS &qualityinfo);
+  bool IsTimeshift() { return m_bTimeshift; }
+  bool SeekTime(int time, bool backwards, double *startpts);
+  time_t GetPlayingTime();
+  time_t GetBufferTimeStart();
+  time_t GetBufferTimeEnd();
 
 protected:
 
@@ -61,8 +67,14 @@ protected:
 
 private:
 
-  PVR_STREAM_PROPERTIES m_Streams;
-  PVR_CHANNEL           m_channelinfo;
-  SQuality              m_Quality;
-  std::map<int, unsigned int> m_StreamIndex;
+  ADDON::XbmcStreamProperties m_streams;
+  PVR_CHANNEL                 m_channelinfo;
+  SQuality                    m_Quality;
+  bool                        m_bTimeshift;
+  uint32_t                    m_MuxPacketSerial;
+  time_t                      m_ReferenceTime;
+  double                      m_ReferenceDTS;
+  double                      m_CurrentDTS;
+  time_t                      m_BufferTimeStart;
+  time_t                      m_BufferTimeEnd;
 };

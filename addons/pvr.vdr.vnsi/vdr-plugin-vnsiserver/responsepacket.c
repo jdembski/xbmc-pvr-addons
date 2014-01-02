@@ -31,8 +31,15 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
+#ifndef __FreeBSD__
 #include <asm/byteorder.h>
+#else
+#include <sys/endian.h>
+#define __be64_to_cpu be64toh
+#define __cpu_to_be64 htobe64
+#endif
 
 #include "responsepacket.h"
 #include "vnsicommand.h"
@@ -120,7 +127,7 @@ bool cResponsePacket::initStatus(uint32_t opCode)
   return true;
 }
 
-bool cResponsePacket::initStream(uint32_t opCode, uint32_t streamID, uint32_t duration, int64_t pts, int64_t dts)
+bool cResponsePacket::initStream(uint32_t opCode, uint32_t streamID, uint32_t duration, int64_t pts, int64_t dts, uint32_t serial)
 {
   initBuffers();
 
@@ -139,6 +146,8 @@ bool cResponsePacket::initStream(uint32_t opCode, uint32_t streamID, uint32_t du
   memcpy(&buffer[16], &ull, sizeof(uint64_t));
   ull = __cpu_to_be64(dts);                    // DTS
   memcpy(&buffer[24], &ull, sizeof(uint64_t));
+  ul = htonl(serial);
+  memcpy(&buffer[32], &ul, sizeof(uint32_t));
   ul = 0;
   memcpy(&buffer[userDataLenPosStream], &ul, sizeof(uint32_t));
 

@@ -34,7 +34,25 @@ extern "C" {
 
 #ifdef __WINDOWS__
 #define strdup _strdup // # strdup is POSIX, _strdup should be used instead
+
+static inline struct tm *localtime_r(const time_t * clock, struct tm *result)
+{
+	struct tm *data;
+	if (!clock || !result)
+		return NULL;
+	data = localtime(clock);
+	if (!data)
+		return NULL;
+	memcpy(result, data, sizeof(*result));
+	return result;
+}
 #endif
+
+#define TCP_RCV_BUF_CONTROL_SIZE           128000 // Inherited from MythTV's MythSocket class
+#define RCV_BUF_CONTROL_SIZE               32000  // Buffer size to parse backend response from control connection
+#define TCP_RCV_BUF_DATA_SIZE              65536  // TCP buffer for video stream (best performance)
+#define RCV_BUF_DATA_SIZE                  64     // Buffer size to parse backend response from data control connection
+#define RCV_BUF_IMAGE_SIZE                 32000  // Buffer size to download artworks
 
 #define LIVETV_CONFLICT_STRATEGY_HASLATER  0
 #define LIVETV_CONFLICT_STRATEGY_STOPTV    1
@@ -53,6 +71,9 @@ extern "C" {
 #define DEFAULT_RECORD_TEMPLATE            1
 
 #define SUBTITLE_SEPARATOR " - "
+
+#define MENUHOOK_REC_DELETE_AND_RERECORD   1
+#define MENUHOOK_KEEP_LIVETV_RECORDING     2
 
 /*!
  * @brief PVR macros for string exchange

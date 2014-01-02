@@ -41,12 +41,12 @@ int64_t cmyth_get_bookmark(cmyth_conn_t conn, cmyth_proginfo_t prog)
 	}
 	sprintf(buf,"%s %"PRIu32" %s","QUERY_BOOKMARK",prog->proginfo_chanId,
 		start_ts_dt);
-	pthread_mutex_lock(&mutex);
-	if ((err = cmyth_send_message(conn,buf)) < 0) {
+	pthread_mutex_lock(&conn->conn_mutex);;
+	if ((r = cmyth_send_message(conn,buf)) < 0) {
 		cmyth_dbg(CMYTH_DBG_ERROR,
 			"%s: cmyth_send_message() failed (%d)\n",
-			__FUNCTION__, err);
-		ret = err;
+			__FUNCTION__, r);
+		ret = r;
 		goto out;
 	}
 	count = cmyth_rcv_length(conn);
@@ -66,7 +66,7 @@ int64_t cmyth_get_bookmark(cmyth_conn_t conn, cmyth_proginfo_t prog)
 	}
 
    out:
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&conn->conn_mutex);
 	return ret;
 }
 
@@ -81,7 +81,15 @@ int cmyth_set_bookmark(cmyth_conn_t conn, cmyth_proginfo_t prog, int64_t bookmar
 	if (!buf) {
 		return -ENOMEM;
 	}
-	if (conn->conn_version >= 66) {
+	if (conn->conn_version >= 77) {
+		/*
+		 * Since protocol 77 mythbackend no longer expects the trailing 4th parameter
+		 * http://code.mythtv.org/trac/ticket/11104
+		 */
+		sprintf(buf, "SET_BOOKMARK %"PRIu32" %s %"PRId64, prog->proginfo_chanId,
+				start_ts_dt, bookmark);
+	}
+	else if (conn->conn_version >= 66) {
 		/*
 		 * Since protocol 66 mythbackend expects a single 64 bit integer rather than two 32 bit
 		 * hi and lo integers. Nevertheless the backend (at least up to 0.25) checks
@@ -94,7 +102,7 @@ int cmyth_set_bookmark(cmyth_conn_t conn, cmyth_proginfo_t prog, int64_t bookmar
 		sprintf(buf, "SET_BOOKMARK %"PRIu32" %s %"PRId32" %"PRId32, prog->proginfo_chanId,
 				start_ts_dt, (int32_t)(bookmark >> 32), (int32_t)(bookmark & 0xffffffff));
 	}
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&conn->conn_mutex);;
 	if ((ret = cmyth_send_message(conn,buf)) < 0) {
 		cmyth_dbg(CMYTH_DBG_ERROR,
 			"%s: cmyth_send_message() failed (%d)\n",
@@ -106,6 +114,6 @@ int cmyth_set_bookmark(cmyth_conn_t conn, cmyth_proginfo_t prog, int64_t bookmar
 			  __FUNCTION__);
 	}
    out:
-	pthread_mutex_unlock(&mutex);
+	pthread_mutex_unlock(&conn->conn_mutex);
 	return ret;
 }

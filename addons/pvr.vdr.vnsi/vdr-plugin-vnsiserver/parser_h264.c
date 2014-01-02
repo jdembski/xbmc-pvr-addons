@@ -1,8 +1,5 @@
 /*
- *      vdr-plugin-vnsi - XBMC server plugin for VDR
- *
- *      Copyright (C) 2010 Alwin Esch (Team XBMC)
- *
+ *      Copyright (C) 2005-2012 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -16,9 +13,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
- *  http://www.gnu.org/copyleft/gpl.html
+ *  along with XBMC; see the file COPYING.  If not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -49,8 +45,8 @@ static const int h264_lev2cpbsize[][2] =
   {-1, -1},
 };
 
-cParserH264::cParserH264(int pID, cTSStream *stream)
- : cParser(pID, stream)
+cParserH264::cParserH264(int pID, cTSStream *stream, sPtsWrap *ptsWrap, bool observePtsWraps)
+ : cParser(pID, stream, ptsWrap, observePtsWraps)
 {
   m_Height            = 0;
   m_Width             = 0;
@@ -62,7 +58,7 @@ cParserH264::cParserH264(int pID, cTSStream *stream)
   m_PixelAspect.den   = 1;
   m_PixelAspect.num   = 0;
   memset(&m_streamData, 0, sizeof(m_streamData));
-  m_PesBufferInitialSize      = 80000;
+  m_PesBufferInitialSize      = 240000;
 
   m_IsVideo = true;
   Reset();
@@ -103,26 +99,33 @@ void cParserH264::Parse(sStreamPacket *pkt)
       double DAR = (PAR * m_Width) / m_Height;
       DEBUGLOG("H.264 SPS: PAR %i:%i", m_PixelAspect.num, m_PixelAspect.den);
       DEBUGLOG("H.264 SPS: DAR %.2f", DAR);
-//      int fpsScale = DVD_TIME_BASE / m_FPS;
+
       if (m_FpsScale == 0)
       {
-        m_FpsScale = m_Stream->Rescale(m_curDTS - m_prevDTS);
+        if (m_curDTS != DVD_NOPTS_VALUE && m_prevDTS != DVD_NOPTS_VALUE)
+          m_FpsScale = m_Stream->Rescale(m_curDTS - m_prevDTS, DVD_TIME_BASE, 90000);
+        else
+          m_FpsScale = 40000;
       }
-      bool streamChange = m_Stream->SetVideoInformation(m_FpsScale,DVD_TIME_BASE, m_Height, m_Width, DAR);
+      bool streamChange = m_Stream->SetVideoInformation(m_FpsScale, DVD_TIME_BASE, m_Height, m_Width, DAR);
+
+      int duration;
+      if (m_curDTS != DVD_NOPTS_VALUE && m_prevDTS != DVD_NOPTS_VALUE)
+        duration = m_curDTS - m_prevDTS;
+      else
+        duration = m_Stream->Rescale(m_FpsScale, 90000, DVD_TIME_BASE);
 
       pkt->id       = m_pID;
       pkt->size     = m_PesNextFramePtr;
       pkt->data     = m_PesBuffer;
       pkt->dts      = m_DTS;
       pkt->pts      = m_PTS;
-      pkt->duration = m_curDTS - m_prevDTS;
+      pkt->duration = duration;
       pkt->streamChange = streamChange;
     }
     m_StartCode = 0xffffffff;
     m_PesParserPtr = 0;
     m_FoundFrame = false;
-    m_PTS = m_curPTS;
-    m_DTS = m_curDTS;
   }
 }
 
@@ -133,7 +136,7 @@ void cParserH264::Reset()
   m_NeedIFrame = true;
   m_NeedSPS = true;
   m_NeedPPS = true;
-  m_DTS = DVD_NOPTS_VALUE;
+  memset(&m_streamData, 0, sizeof(m_streamData));
 }
 
 int cParserH264::Parse_H264(uint32_t startcode, int buf_ptr, bool &complete)
@@ -168,16 +171,22 @@ int cParserH264::Parse_H264(uint32_t startcode, int buf_ptr, bool &complete)
       return -1;
     }
 
-    m_streamData.vcl_nal = vcl;
-
-    // if this is the first frame we see, set timestamp
-    if (m_DTS == DVD_NOPTS_VALUE)
+    if (!m_FoundFrame)
     {
-      m_PTS = m_curPTS;
-      m_DTS = m_curDTS;
+      if (buf_ptr - 4 >= m_PesTimePos)
+      {
+        m_DTS = m_curDTS;
+        m_PTS = m_curPTS;
+      }
+      else
+      {
+        m_DTS = m_prevDTS;
+        m_PTS = m_prevPTS;
+      }
     }
-    m_FoundFrame = true;
 
+    m_streamData.vcl_nal = vcl;
+    m_FoundFrame = true;
     break;
   }
 
@@ -226,7 +235,7 @@ int cParserH264::Parse_H264(uint32_t startcode, int buf_ptr, bool &complete)
   }
 
   case NAL_AUD:
-    if (m_FoundFrame && (m_prevDTS != DVD_NOPTS_VALUE))
+    if (m_FoundFrame && (m_prevPTS != DVD_NOPTS_VALUE))
     {
       complete = true;
       m_PesNextFramePtr = buf_ptr - 4;
