@@ -178,7 +178,7 @@ Vu::Vu()
   if ((g_strUsername.length() > 0) && (g_strPassword.length() > 0))
     strURL.Format("%s:%s@", g_strUsername.c_str(), g_strPassword.c_str());
   
-  if (g_bUseSecureHTTP)
+  if (!g_bUseSecureHTTP)
     strURL.Format("http://%s%s:%u/", strURL.c_str(), g_strHostname.c_str(), g_iPortWeb);
   else
     strURL.Format("https://%s%s:%u/", strURL.c_str(), g_strHostname.c_str(), g_iPortWeb);
@@ -489,10 +489,10 @@ bool Vu::LoadChannels(CStdString strServiceReference, CStdString strGroupName)
     if ((g_strUsername.length() > 0) && (g_strPassword.length() > 0))
       strTmp.Format("%s:%s@", g_strUsername.c_str(), g_strPassword.c_str());
     
-    if (g_bUseSecureHTTP)
+    if (!g_bUseSecureHTTP)
       strTmp.Format("http://%s%s:%d/%s", strTmp.c_str(), g_strHostname, g_iPortStream, strTmp2.c_str());
     else
-      strTmp.Format("http://%s%s:%d/%s", strTmp.c_str(), g_strHostname, g_iPortStream, strTmp2.c_str());
+      strTmp.Format("https://%s%s:%d/%s", strTmp.c_str(), g_strHostname, g_iPortStream, strTmp2.c_str());
     
     newChannel.strStreamURL = strTmp;
 
