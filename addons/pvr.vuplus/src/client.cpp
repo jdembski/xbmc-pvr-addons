@@ -239,6 +239,7 @@ void ADDON_Destroy()
 
   if (VuData)
   {
+    XBMC->Log(LOG_DEBUG, "%s - Deleting PVR-Addon object", __FUNCTION__);
     delete VuData;
     VuData = NULL;
   }
