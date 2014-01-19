@@ -599,15 +599,26 @@ PVR_ERROR Vu::GetChannels(ADDON_HANDLE handle, bool bRadio)
 
 Vu::~Vu() 
 {
+  XBMC->Log(LOG_DEBUG, "%s Stopping update thread...", __FUNCTION__);
   StopThread();
   
+  XBMC->Log(LOG_DEBUG, "%s Removing internal channels list...", __FUNCTION__);
   m_channels.clear();  
+  
+  XBMC->Log(LOG_DEBUG, "%s Removing internal timers list...", __FUNCTION__);
   m_timers.clear();
+  
+  XBMC->Log(LOG_DEBUG, "%s Removing internal recordings list...", __FUNCTION__);
   m_recordings.clear();
+  
+  XBMC->Log(LOG_DEBUG, "%s Removing internal group list...", __FUNCTION__);
   m_groups.clear();
   m_bIsConnected = false;
   if (m_tsBuffer)
+  {
+    XBMC->Log(LOG_DEBUG, "%s Removing internal tsBuffer...", __FUNCTION__);
     SAFE_DELETE(m_tsBuffer);
+  }
 }
 
 bool Vu::GetInitialEPGForGroup(VuChannelGroup &group)
