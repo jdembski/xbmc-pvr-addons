@@ -285,7 +285,7 @@ void  *Vu::Process()
 
   }
 
-  CLockObject lock(m_mutex);
+  //CLockObject lock(m_mutex);
   m_started.Broadcast();
 
   return NULL;
@@ -1671,20 +1671,28 @@ bool Vu::SwitchChannel(const PVR_CHANNEL &channel)
 
   m_iCurrentChannel = (int)channel.iUniqueId;
 
-  if (!g_bZap)
-    return true;
+  if (g_bZap)
+  {
+    // Zapping is set to true, so send the zapping command to the PVR box 
+    CStdString strServiceReference = m_channels.at(channel.iUniqueId-1).strServiceReference.c_str();
 
-  // Zapping is set to true, so send the zapping command to the PVR box 
-  CStdString strServiceReference = m_channels.at(channel.iUniqueId-1).strServiceReference.c_str();
+    CStdString strTmp;
+    strTmp.Format("web/zap?sRef=%s", URLEncodeInline(strServiceReference));
 
-  CStdString strTmp;
-  strTmp.Format("web/zap?sRef=%s", URLEncodeInline(strServiceReference));
+    CStdString strResult;
+    if(!SendSimpleCommand(strTmp, strResult))
+      return false;
+  
+    if (!g_bUseTimeshift)
+      return true;
+  }
 
-  CStdString strResult;
-  if(!SendSimpleCommand(strTmp, strResult))
-    return false;
+  if (m_tsBuffer)
+    SAFE_DELETE(m_tsBuffer);
 
-  return true;
+  XBMC->Log(LOG_INFO, "%s ts buffer starts url=%s", __FUNCTION__, GetLiveStreamURL(channel));
+  m_tsBuffer = new TimeshiftBuffer(GetLiveStreamURL(channel), g_strTimeshiftBufferPath);
+  return m_tsBuffer->IsValid();
 }
 
 void Vu::SendPowerstate()
