@@ -244,11 +244,12 @@ void  *Vu::Process()
   // Wait for the initial EPG update to complete 
   bool bwait = true;
 
-  while (m_bInitialEPG == true) 
+/*  while (m_bInitialEPG == true) 
   {
     XBMC->Log(LOG_DEBUG, "%s Initial EPG update not complete, wait another second!", __FUNCTION__);
     Sleep(1000);
   }
+*/
 
   // Trigger "Real" EPG updates 
   for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
@@ -256,7 +257,6 @@ void  *Vu::Process()
     XBMC->Log(LOG_DEBUG, "%s - Trigger EPG update for channel '%d'", __FUNCTION__, iChannelPtr);
     PVR->TriggerEpgUpdate(m_channels.at(iChannelPtr).iUniqueId);
   }
-
 
   while(!IsStopped())
   {
@@ -599,6 +599,7 @@ PVR_ERROR Vu::GetChannels(ADDON_HANDLE handle, bool bRadio)
 
 Vu::~Vu() 
 {
+  CLockObject lock(m_mutex);
   XBMC->Log(LOG_DEBUG, "%s Stopping update thread...", __FUNCTION__);
   StopThread();
   
@@ -1663,8 +1664,12 @@ long long Vu::LengthLiveStream(void)
 
 bool Vu::SwitchChannel(const PVR_CHANNEL &channel)
 {
+  XBMC->Log(LOG_DEBUG, "%s Switching channels", __FUNCTION__);
+
   if ((int)channel.iUniqueId == m_iCurrentChannel)
     return true;
+
+  m_iCurrentChannel = (int)channel.iUniqueId;
 
   if (!g_bZap)
     return true;
