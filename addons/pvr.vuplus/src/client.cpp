@@ -187,7 +187,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!VuData->Open()) 
   {
     SAFE_DELETE(VuData);
-    SAFE_DELTE(PVR);
+    SAFE_DELETE(PVR);
     SAFE_DELETE(XBMC);
     VuData = NULL;
     PVR = NULL;
