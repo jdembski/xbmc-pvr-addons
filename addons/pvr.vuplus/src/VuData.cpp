@@ -1620,6 +1620,7 @@ bool Vu::OpenLiveStream(const PVR_CHANNEL &channelinfo)
 
   if (m_tsBuffer)
     SAFE_DELETE(m_tsBuffer);
+
   XBMC->Log(LOG_INFO, "%s ts buffer starts url=%s", __FUNCTION__, GetLiveStreamURL(channelinfo));
   m_tsBuffer = new TimeshiftBuffer(GetLiveStreamURL(channelinfo), g_strTimeshiftBufferPath);
   return m_tsBuffer->IsValid();

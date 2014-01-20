@@ -162,8 +162,6 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!hdl || !props)
     return ADDON_STATUS_UNKNOWN;
 
-  //PVR_PROPERTIES* pvrprops = (PVR_PROPERTIES*)props;
-
   XBMC = new CHelper_libXBMC_addon;
   if (!XBMC->RegisterMe(hdl))
   {
@@ -188,9 +186,9 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   VuData = new Vu;
   if (!VuData->Open()) 
   {
-    delete VuData;
-    delete PVR;
-    delete XBMC;
+    SAFE_DELETE(VuData);
+    SAFE_DELTE(PVR);
+    SAFE_DELETE(XBMC);
     VuData = NULL;
     PVR = NULL;
     XBMC = NULL;
