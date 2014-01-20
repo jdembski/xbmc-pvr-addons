@@ -244,12 +244,12 @@ void  *Vu::Process()
   // Wait for the initial EPG update to complete 
   bool bwait = true;
 
-/*  while (m_bInitialEPG == true) 
+  CLockObject lock(m_mutex);
+  while (m_bInitialEPG == true) 
   {
     XBMC->Log(LOG_DEBUG, "%s Initial EPG update not complete, wait another second!", __FUNCTION__);
     Sleep(1000);
   }
-*/
 
   // Trigger "Real" EPG updates 
   for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
