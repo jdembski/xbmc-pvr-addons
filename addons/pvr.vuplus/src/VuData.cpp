@@ -244,12 +244,12 @@ void  *Vu::Process()
   // Wait for the initial EPG update to complete 
   bool bwait = true;
 
-  CLockObject lock(m_mutex);
-  while (m_bInitialEPG == true) 
-  {
-    XBMC->Log(LOG_DEBUG, "%s Initial EPG update not complete, wait another second!", __FUNCTION__);
-    Sleep(1000);
-  }
+  //CLockObject lock(m_mutex);
+//  while (m_bInitialEPG == true) 
+//  {
+//    XBMC->Log(LOG_DEBUG, "%s Initial EPG update not complete, wait another second!", __FUNCTION__);
+    Sleep(10000);
+//  }
 
   // Trigger "Real" EPG updates 
   for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
@@ -518,7 +518,7 @@ bool Vu::IsConnected()
 
 CStdString Vu::GetHttpXML(CStdString& url) 
 {
-  CLockObject lock(m_mutex);
+//  CLockObject lock(m_mutex);
 
   XBMC->Log(LOG_INFO, "%s Open webAPI with URL: '%s'", __FUNCTION__, url.c_str());
 

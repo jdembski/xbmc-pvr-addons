@@ -222,25 +222,9 @@ void ADDON_Destroy()
     VuData->SendPowerstate();
   }
   
-
-  if (PVR)
-  {
-    delete PVR;
-    PVR = NULL;
-  }
-
-  if (XBMC)
-  {
-    delete XBMC;
-    XBMC = NULL;
-  }
-
-  if (VuData)
-  {
-    XBMC->Log(LOG_DEBUG, "%s - Deleting PVR-Addon object", __FUNCTION__);
-    delete VuData;
-    VuData = NULL;
-  }
+  SAFE_DELETE(VuData);
+  SAFE_DELETE(PVR);
+  SAFE_DELETE(XBMC);
 
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
