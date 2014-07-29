@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with XBMC; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  the Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
+ *  MA 02110-1301  USA
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
@@ -235,6 +236,19 @@ bool cVNSIData::GetChannelsList(ADDON_HANDLE handle, bool radio)
     tag.iUniqueId         = vresp->extract_U32();
     tag.iEncryptionSystem = vresp->extract_U32();
     char *strCaids        = vresp->extract_String();
+    if (m_protocol >= 6)
+    {
+      std::string path = g_szIconPath;
+      std::string ref = vresp->extract_String();
+      if (!path.empty())
+      {
+        if (path[path.length()-1] != '/')
+          path += '/';
+        path += ref;
+        path += ".png";
+        strncpy(tag.strIconPath, path.c_str(), sizeof(tag.strIconPath) - 1);
+      }
+    }
     tag.bIsRadio          = radio;
 
     PVR->TransferChannelEntry(handle, &tag);

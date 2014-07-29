@@ -4,12 +4,12 @@
 # Addon Provider: Fred Hoogduin, Marcel Groothuis
 msgid ""
 msgstr ""
-"Project-Id-Version: XBMC Main Translation Project (Frodo)\n"
+"Project-Id-Version: XBMC Main\n"
 "Report-Msgid-Bugs-To: http://trac.xbmc.org/\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: XBMC Translation Team\n"
-"Language-Team: Norwegian (http://www.transifex.com/projects/p/XBMC-Main-Frodo/language/no/)\n"
+"Language-Team: Norwegian (http://www.transifex.com/projects/p/xbmc-main/language/no/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -18,11 +18,11 @@ msgstr ""
 
 msgctxt "#30000"
 msgid "ARGUS TV Hostname"
-msgstr "ARGUS TV vertsnavn"
+msgstr "ARGUS TV-vertsnavn"
 
 msgctxt "#30001"
 msgid "ARGUS TV webserver port"
-msgstr "ARGUS TV webtjener-port"
+msgstr "ARGUS TV-nettjenerport"
 
 msgctxt "#30002"
 msgid "Include Radio"
@@ -30,7 +30,7 @@ msgstr "Inkluder radio"
 
 msgctxt "#30003"
 msgid "Connect timeout (s)"
-msgstr "Tilkobling tidsavbrudd(er)"
+msgstr "Tilkoblingsavbrudd (s)"
 
 msgctxt "#30004"
 msgid "Windows user account"
@@ -42,4 +42,4 @@ msgstr "Passord"
 
 msgctxt "#30006"
 msgid "Delay after tuning (ms)"
-msgstr "Forsinkelse etter lasting (i millisekunder)"
+msgstr "Forsinkelse etter lasting (ms)"

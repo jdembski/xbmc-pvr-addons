@@ -12,7 +12,7 @@ AC_PREFIX_DEFAULT($PREFIX_DEFAULT)
 
 AC_PROG_CXX
 AC_PROG_CPP
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_SEARCH_LIBS([pthread_create],[pthread],, AC_MSG_ERROR([required library 'pthread' is missing]))
 
@@ -130,7 +130,7 @@ if test "$have_gl" = "yes"; then
 fi
 echo "GL: $have_gl"
 
-AC_CHECK_LIB([GLESv2],[main],have_gles2=yes, have_gles2=no)
+AC_CHECK_LIB([GLESv2],[main],[AC_CHECK_HEADER([GLES2/gl2.h], have_gles2=yes, have_gles2=no, )], have_gles2=no)
 if test "$have_gles2" = "yes"; then
   AC_DEFINE([HAVE_GLES2],[1],["Define to 1 if we have gles2"])
   AM_CONDITIONAL(HAVE_GLES2, true)
@@ -263,42 +263,43 @@ else
 fi
 AC_SUBST(DATADIR)
 
+### Keep this in alphabetical order
 AC_CONFIG_FILES([Makefile \
                  lib/Makefile \
-                 lib/jsoncpp/Makefile \
-                 lib/libhts/Makefile \
-                 lib/tinyxml/Makefile \
                  lib/cmyth/Makefile \
                  lib/cmyth/libcmyth/Makefile \
                  lib/cmyth/librefmem/Makefile \
-                 lib/tinyxml2/Makefile \
+                 lib/jsoncpp/Makefile \
                  lib/libdvblinkremote/Makefile \
+                 lib/libhts/Makefile \
+                 lib/tinyxml/Makefile \
+                 lib/tinyxml2/Makefile \
                  addons/Makefile \
-                 addons/pvr.demo/Makefile \
-                 addons/pvr.dvbviewer/Makefile \
                  addons/pvr.argustv/Makefile \
+                 addons/pvr.demo/Makefile \
+                 addons/pvr.dvblink/Makefile \
+                 addons/pvr.dvbviewer/Makefile \
                  addons/pvr.hts/Makefile \
+                 addons/pvr.iptvsimple/Makefile \
                  addons/pvr.mediaportal.tvserver/Makefile \
+                 addons/pvr.mythtv.cmyth/Makefile \
                  addons/pvr.nextpvr/Makefile \
                  addons/pvr.njoy/Makefile \
-                 addons/pvr.vuplus/Makefile \
                  addons/pvr.vdr.vnsi/Makefile \
-                 addons/pvr.mythtv.cmyth/Makefile \
-                 addons/pvr.dvblink/Makefile \
+                 addons/pvr.vuplus/Makefile \
                  addons/pvr.wmc/Makefile \
-                 addons/pvr.iptvsimple/Makefile \
                  addons/pvr.argustv/addon/addon.xml
                  addons/pvr.demo/addon/addon.xml
+                 addons/pvr.dvblink/addon/addon.xml
                  addons/pvr.dvbviewer/addon/addon.xml
                  addons/pvr.hts/addon/addon.xml
+                 addons/pvr.iptvsimple/addon/addon.xml
                  addons/pvr.mediaportal.tvserver/addon/addon.xml
                  addons/pvr.mythtv.cmyth/addon/addon.xml
                  addons/pvr.nextpvr/addon/addon.xml
                  addons/pvr.njoy/addon/addon.xml
                  addons/pvr.vdr.vnsi/addon/addon.xml
                  addons/pvr.vuplus/addon/addon.xml
-                 addons/pvr.dvblink/addon/addon.xml
-                 addons/pvr.wmc/addon/addon.xml
-                 addons/pvr.iptvsimple/addon/addon.xml])
+                 addons/pvr.wmc/addon/addon.xml])
 
 AC_OUTPUT

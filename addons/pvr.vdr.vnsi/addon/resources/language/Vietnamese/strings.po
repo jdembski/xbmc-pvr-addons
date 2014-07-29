@@ -4,12 +4,12 @@
 # Addon Provider: FernetMenta, Team XBMC
 msgid ""
 msgstr ""
-"Project-Id-Version: XBMC Main Translation Project (Frodo)\n"
+"Project-Id-Version: XBMC Main\n"
 "Report-Msgid-Bugs-To: http://trac.xbmc.org/\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: XBMC Translation Team\n"
-"Language-Team: Vietnamese (http://www.transifex.com/projects/p/XBMC-Main-Frodo/language/vi/)\n"
+"Language-Team: Vietnamese (http://www.transifex.com/projects/p/xbmc-main/language/vi/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -204,6 +204,26 @@ msgctxt "#30046"
 msgid "Create channel groups automatically on the server"
 msgstr "Tạo các nhóm kênh tự động trên máy chủ"
 
+msgctxt "#30101"
+msgid "Setup"
+msgstr "Cài đặt"
+
 msgctxt "#30108"
 msgid "Channels"
 msgstr "Kênh"
+
+msgctxt "#30110"
+msgid "Channel blacklist"
+msgstr "Danh sách kênh bị cấm"
+
+msgctxt "#30111"
+msgid "Channel filters"
+msgstr "Bộ lọc kênh"
+
+msgctxt "#30112"
+msgid "Radio Channels"
+msgstr "Kênh Radio"
+
+msgctxt "#30113"
+msgid "Save filters"
+msgstr "Lưu bộ lọc"
