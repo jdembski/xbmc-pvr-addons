@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.vuplus"
-<<<<<<< HEAD
-  version="1.9.11"
-=======
   version="1.9.14"
->>>>>>> upstream/master
   name="VU+ / Enigma2 Client"
   provider-name="Joerg Dembski">
   <requires>
